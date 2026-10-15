@@ -1,0 +1,3405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ApexSys Entregas</title>
+
+    <meta name="theme-color" content="#052439">
+    <link rel="manifest" href="manifest.json">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <style>
+        :root {
+            --apex-brand: #052439; 
+            --apex-brand-hover: #031826;
+            --apex-text: #334155;
+            --apex-bg: #f4f6f9; 
+        }
+        body { font-family: 'Inter', sans-serif; background-color: var(--apex-bg); color: var(--apex-text); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 80px; }
+        .app-screen { display: none; }
+        .app-screen.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Login */
+        .login-bg { background-color: var(--apex-brand); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .login-logo-container img { max-height: 70px; margin-bottom: 30px; object-fit: contain; }
+        .login-card { background: #ffffff; border-radius: 20px; padding: 40px 30px; width: 100%; max-width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        
+        /* Inputs e Botões */
+        .form-control { border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px 16px; font-size: 0.95rem; }
+        .form-control:focus { border-color: var(--apex-brand); box-shadow: 0 0 0 3px rgba(5, 36, 57, 0.15); }
+        .btn-apex { background-color: var(--apex-brand); color: white; border: none; border-radius: 8px; padding: 14px; font-weight: 600; width: 100%; transition: 0.2s; }
+        .btn-apex:hover { background-color: var(--apex-brand-hover); color: white; }
+
+        /* Navbars */
+        .top-navbar { background-color: var(--apex-brand); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .top-navbar img { height: 35px; object-fit: contain; }
+        .btn-logout { color: white; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.1); }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #ffffff; box-shadow: 0 -4px 20px rgba(0,0,0,0.05); display: flex; justify-content: space-around; padding: 10px 0 15px 0; z-index: 1000; border-radius: 20px 20px 0 0; }
+        .nav-item { text-align: center; color: #94a3b8; text-decoration: none; font-size: 0.75rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; width: 33%; }
+        .nav-item i { font-size: 1.5rem; margin-bottom: 2px; transition: 0.2s; }
+        .nav-item.active { color: var(--apex-brand); }
+        
+        .fab-scan { background: var(--apex-brand); color: white; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 4px 15px rgba(5, 36, 57, 0.4); transform: translateY(-25px); border: 4px solid #f4f6f9; }
+        .nav-item.active .fab-scan { background: var(--apex-brand-hover); border-color: #ffffff; }
+
+        .apex-card { background: white; border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.03); }
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; margin-bottom: 15px; }
+        
+        /* Câmera Tela Cheia */
+        #camera-fullscreen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; flex-direction: column; }
+        #camera-fullscreen.active { display: flex; animation: fadeIn 0.2s ease; }
+        #reader { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border: none; border-radius: 0; }
+        .btn-fechar-camera { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); z-index: 3001; padding: 15px 40px; border-radius: 50px; font-weight: bold; background: #ef4444; color: white; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        #camera-toast { position: absolute; top: 40px; left: 50%; transform: translateX(-50%); z-index: 3002; display: none; padding: 10px 20px; border-radius: 50px; background: #10b981; color: white; font-weight: bold; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+
+        /* Modal de Assinatura Tela Cheia */
+        .modal-assinatura { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 3000; flex-direction: column; }
+        .modal-assinatura.active { display: flex; animation: fadeIn 0.2s ease; }
+        .canvas-container { display: flex; flex-direction: column; height: 100%; width: 100%; padding: 20px; }
+        #signature-pad { flex-grow: 1; border: 2px dashed #cbd5e1; border-radius: 12px; touch-action: none; background: #f8fafc; cursor: crosshair; margin-bottom: 20px; width: 100%; }
+        
+        /* Botões de Seleção (Blocos e Aptos) */
+        .btn-selecao { flex-grow: 1; min-width: 60px; padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; background: #f8fafc; color: var(--apex-text); font-weight: 600; text-align: center; transition: 0.2s; }
+        .btn-selecao.active { background: var(--apex-brand); color: white; border-color: var(--apex-brand); transform: scale(1.05); box-shadow: 0 4px 10px rgba(5, 36, 57, 0.2); }
+
+        /* =========================================
+           ABAS DO MORADOR (TABS)
+           ========================================= */
+        .morador-tabs { display: flex; background: #e2e8f0; border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+        .morador-tab { flex: 1; text-align: center; padding: 10px; font-weight: 600; font-size: 0.9rem; color: #64748b; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+        .morador-tab.active { background: white; color: var(--apex-brand); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        /* =========================================
+           CALENDÁRIO HORIZONTAL (RESERVAS)
+           ========================================= */
+        .calendario-scroll { display: flex; overflow-x: auto; padding-bottom: 10px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+        .calendario-scroll::-webkit-scrollbar { height: 6px; }
+        .calendario-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
+        
+        .dia-reserva { flex: 0 0 auto; width: 70px; height: 85px; margin-right: 10px; border-radius: 12px; border: 1px solid #cbd5e1; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .dia-reserva:hover { border-color: var(--apex-brand); }
+        .dia-reserva.ocupado { background: #fee2e2; border-color: #fca5a5; color: #ef4444; opacity: 0.6; cursor: not-allowed; }
+        .dia-reserva.selecionado { background: var(--apex-brand); border-color: var(--apex-brand); color: white; transform: scale(1.05); box-shadow: 0 4px 10px rgba(5,36,57,0.3); }
+        
+        .dia-semana { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; margin-bottom: 2px; }
+        .dia-numero { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+        .dia-mes { font-size: 0.7rem; font-weight: 600; opacity: 0.8; }
+
+        /* =========================================
+           DESIGN PREMIUM - LOGIN E OTP (GOOGLE STYLE)
+           ========================================= */
+        .otp-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 30px; margin-top: 20px; }
+        .otp-input { width: 35px; height: 50px; text-align: center; font-size: 2rem; font-weight: 400; border: none; border-bottom: 2px solid #555; background-color: transparent; color: #000; padding: 0; border-radius: 0; outline: none; box-shadow: none !important; transition: border-color 0.2s ease; }
+        .otp-input:focus { border-bottom: 2px solid var(--apex-brand); }
+        .password-container { position: relative; }
+        
+    </style>
+</head>
+<body>
+
+    <!-- ========================================== -->
+    <!-- ALERTA 1: BANNER DE INSTALAÇÃO DO APP PWA  -->
+    <!-- ========================================== -->
+    <div id="pwa-install-banner" class="d-none" style="position: fixed; top: 0; left: 0; width: 100%; background: #0f172a; color: white; padding: 15px; z-index: 9999; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+        <div class="d-flex align-items-center gap-3">
+            <img src="icone-app.png" style="width: 40px; height: 40px; border-radius: 8px; object-fit: contain;">
+            <div>
+                <strong class="d-block" style="font-size: 14px;">ApexSys Entregas</strong>
+                <small style="color: #94a3b8; font-size: 11px;">Instale o App no celular</small>
+            </div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <button class="btn btn-sm fw-bold text-dark" style="background: #10b981; border-radius: 20px; padding: 5px 15px;" onclick="instalarPWA()">Instalar</button>
+            <i class="bi bi-x-lg text-muted fs-4" style="cursor: pointer;" onclick="fecharBannerPWA()"></i>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ALERTA 2: TOAST DE NOVA ENCOMENDA AO VIVO  -->
+    <!-- ========================================== -->
+    <div id="toast-realtime" class="d-none" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 15px 25px; border-radius: 50px; z-index: 10000; display: flex; align-items: center; gap: 15px; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4); animation: slideDown 0.5s ease;">
+        <i class="bi bi-box-seam-fill fs-3"></i>
+        <div>
+            <strong class="d-block" style="line-height: 1;">Chegou Pacote!</strong>
+            <small id="toast-realtime-msg">Nova encomenda na portaria.</small>
+        </div>
+    </div>
+    <style>@keyframes slideDown { from { top: -50px; opacity: 0; } to { top: 20px; opacity: 1; } }</style>
+
+    <!-- TELA 1: LOGIN E RECUPERAÇÃO -->
+    <div id="screen-login" class="app-screen active">
+        <div class="login-bg">
+            <div class="login-logo-container"><img src="logo.png" alt="ApexSys Entregas"></div>
+            
+            <!-- CAIXA 1: LOGIN PADRÃO -->
+            <div class="login-card" id="box-login-padrao">
+                <h5 class="text-center fw-bold text-dark mb-4">Acesso ao Sistema</h5>
+                <form id="form-login" onsubmit="realizarLogin(event)">
+                    <div class="mb-3">
+                        <input type="email" id="email" class="form-control form-control-lg" placeholder="E-mail" required>
+                    </div>
+                    <div class="mb-3 password-container">
+                        <input type="password" id="senha" class="form-control form-control-lg" placeholder="Senha" required>
+                        <i class="bi bi-eye-slash toggle-password" onclick="alternarVisibilidadeSenha('senha', this)"></i>
+                    </div>
+                    
+                    <div class="text-end mb-4">
+                        <a href="#" class="text-decoration-none small fw-bold" style="color: var(--apex-brand);" onclick="alternarTelaLogin('box-recuperar-senha')">Esqueceu a senha?</a>
+                    </div>
+
+                    <div id="login-alert" class="alert alert-danger py-2 mb-3 fw-bold text-center shadow-sm border-danger" style="display:none; font-size: 0.85rem; border-radius: 8px;"></div>
+                    
+                    <button type="submit" class="btn-apex py-3 fs-5 mb-3" id="btn-entrar">Entrar no Sistema</button>
+                    
+                    <div class="text-center mt-3 border-top pt-3">
+                        <p class="text-muted small mb-2">É morador e não tem conta?</p>
+                        <button type="button" class="btn btn-outline-secondary w-100 fw-bold py-2" onclick="alternarTelaLogin('box-criar-conta')">Criar minha conta</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CAIXA 2: CRIAR CONTA (BLINDADA) -->
+            <div class="login-card d-none" id="box-criar-conta">
+                <h5 class="text-center fw-bold text-dark mb-2">Cadastro de Morador</h5>
+                <p class="text-center text-muted small mb-4">Valide o PIN fornecido pela portaria.</p>
+                
+                <div class="mb-3"><input type="text" id="cad-pin" class="form-control form-control-lg text-center fw-bold text-uppercase" placeholder="PIN DA PORTARIA" style="letter-spacing: 3px;" required></div>
+                <div class="mb-3"><input type="email" id="cad-email" class="form-control form-control-lg" placeholder="Seu E-mail" required></div>
+                <div class="mb-4 password-container">
+                    <input type="password" id="cad-senha" class="form-control form-control-lg" placeholder="Crie uma Senha (mín. 6)" required>
+                    <i class="bi bi-eye-slash toggle-password" onclick="alternarVisibilidadeSenha('cad-senha', this)"></i>
+                </div>
+                
+                <div id="cad-alert" class="alert alert-danger py-2 mb-3 fw-bold text-center shadow-sm" style="display:none; font-size: 0.85rem; border-radius: 8px;"></div>
+                
+                <button type="button" class="btn-apex bg-success border-0 py-3 mb-3" id="btn-registrar" onclick="validarPinECriarConta()">Criar Conta</button>
+                <button type="button" class="btn btn-light border w-100 fw-bold text-muted py-2" onclick="alternarTelaLogin('box-login-padrao')">Voltar ao Login</button>
+            </div>
+
+            <!-- CAIXA 3: ESQUECI A SENHA (PEDIR CÓDIGO) -->
+            <div class="login-card d-none" id="box-recuperar-senha">
+                <h5 class="text-center fw-bold text-dark mb-2">Recuperar Senha</h5>
+                <p class="text-center text-muted small mb-4">Digite seu e-mail para receber um código de segurança.</p>
+                
+                <div class="mb-4"><input type="email" id="rec-email" class="form-control form-control-lg" placeholder="Seu E-mail Cadastrado"></div>
+                
+                <div id="rec-alert" class="alert alert-danger py-2 mb-3 fw-bold text-center shadow-sm" style="display:none; font-size: 0.85rem; border-radius: 8px;"></div>
+                
+                <button type="button" class="btn-apex py-3 mb-3" id="btn-enviar-codigo" onclick="enviarCodigoRecuperacao()">Enviar Código</button>
+                <button type="button" class="btn btn-light border w-100 fw-bold text-muted py-2" onclick="alternarTelaLogin('box-login-padrao')">Voltar ao Login</button>
+            </div>
+
+            <!-- CAIXA 4: VERIFICAR CÓDIGO OTP (GOOGLE STYLE) -->
+            <div class="login-card d-none" id="box-verificar-codigo">
+                <h4 class="text-center text-dark mb-4" style="font-weight: 400;">Insira o código de segurança</h4>
+                
+                <p class="text-center text-muted mb-4" style="font-size: 0.9rem; line-height: 1.5;">
+                    Insira o código de 6 dígitos que enviamos para<br>
+                    <strong class="text-dark" id="lbl-email-mascarado">a••••••a@g••••l.com</strong>.
+                </p>
+                
+                <p class="text-center text-muted small mb-2">Pode levar até um minuto para que você receba o código.</p>
+                
+                <!-- AS 6 CAIXINHAS ESTILO GOOGLE (SÓ O TRAÇO) -->
+                <div class="otp-container" id="otp-inputs">
+                    <input type="text" class="otp-input" maxlength="1" onkeyup="moverFocoOTP(this, 1)" onpaste="colarOTP(event)">
+                    <input type="text" class="otp-input" maxlength="1" onkeyup="moverFocoOTP(this, 2)">
+                    <input type="text" class="otp-input" maxlength="1" onkeyup="moverFocoOTP(this, 3)">
+                    <input type="text" class="otp-input" maxlength="1" onkeyup="moverFocoOTP(this, 4)">
+                    <input type="text" class="otp-input" maxlength="1" onkeyup="moverFocoOTP(this, 5)">
+                    <input type="text" class="otp-input" maxlength="1" onkeyup="moverFocoOTP(this, 6)">
+                </div>
+                
+                <div id="verificar-alert" class="alert alert-danger py-2 mb-3 fw-bold text-center shadow-sm" style="display:none; font-size: 0.85rem; border-radius: 8px;"></div>
+                
+                <button type="button" class="btn-apex bg-primary border-0 py-3 mb-3" id="btn-verificar-codigo" onclick="validarCodigoOTP()">Verificar Código</button>
+                <button type="button" class="btn btn-light border w-100 fw-bold text-muted py-2" onclick="alternarTelaLogin('box-login-padrao')">Cancelar</button>
+            </div>
+
+            <!-- CAIXA 5: DEFINIR NOVA SENHA -->
+            <div class="login-card d-none" id="box-definir-senha">
+                <h5 class="text-center fw-bold text-success mb-2"><i class="bi bi-shield-check"></i> Código Aprovado</h5>
+                <p class="text-center text-muted small mb-4">Agora crie a sua nova senha de acesso.</p>
+                
+                <div class="mb-4 password-container">
+                    <input type="password" id="rec-nova-senha" class="form-control form-control-lg" placeholder="Crie sua Nova Senha">
+                    <i class="bi bi-eye-slash toggle-password" onclick="alternarVisibilidadeSenha('rec-nova-senha', this)"></i>
+                </div>
+                
+                <div id="nova-senha-alert" class="alert alert-danger py-2 mb-3 fw-bold text-center shadow-sm" style="display:none; font-size: 0.85rem; border-radius: 8px;"></div>
+                
+                <button type="button" class="btn-apex bg-success border-0 py-3 mb-3" id="btn-salvar-nova-senha" onclick="salvarNovaSenhaDefinitiva()">Salvar Nova Senha</button>
+            </div>
+
+            <div class="text-white mt-4 opacity-50" style="font-size: 0.75rem;">Tecnologia ApexSys</div>
+        </div>
+    </div>
+
+    <!-- APP SHELL (Top Bar) -->
+    <div id="top-navbar" class="top-navbar d-none">
+        <img src="logo.png" alt="ApexSys">
+        <button class="btn btn-sm btn-logout rounded-pill fw-bold" onclick="logout()"><i class="bi bi-box-arrow-right"></i> Sair</button>
+    </div>
+
+    <!-- MODAL: DETALHES DOS PACOTES DO MORADOR (UX CLEAN) -->
+    <div class="modal fade" id="modal-pacotes-morador" tabindex="-1" style="z-index: 3005;">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg" style="background: var(--apex-bg); border-radius: 16px;">
+                <div class="modal-header border-0 bg-white shadow-sm" style="border-radius: 16px 16px 0 0;">
+                    <h5 class="modal-title fw-bold text-dark" id="modal-pacotes-titulo"><i class="bi bi-box-seam text-primary me-2"></i> Encomendas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div id="lista-pacotes-detalhados" class="d-flex flex-column gap-3">
+                        <!-- O JS vai injetar os pacotes aqui -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA 2: DASHBOARD -->
+    <div id="screen-dashboard" class="app-screen container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Resumo de Hoje</h5>
+            <button class="btn btn-sm btn-light border text-muted" onclick="carregarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
+        </div>
+        <div class="row text-center">
+            <div class="col-6">
+                <div class="apex-card bg-warning text-dark border-0">
+                    <h2 id="dash-pendentes" class="mb-0 fw-bold">0</h2>
+                    <small class="fw-bold">Pendentes</small>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="apex-card bg-success text-white border-0">
+                    <h2 id="dash-entregues" class="mb-0 fw-bold">0</h2>
+                    <small class="fw-bold">Entregues</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TELA 3: REGISTRAR (Scanner) -->
+    <!-- ========================================== -->
+    <div id="screen-scan" class="app-screen container mt-4">
+        <h5 class="fw-bold mb-3" style="color: var(--apex-brand);">Registrar Entrada</h5>
+        <div class="apex-card">
+
+            <!-- Botão da Câmera Nativa do Site -->
+            <button class="btn btn-apex w-100 mb-4 py-3 fw-bold fs-5 shadow-sm" onclick="ligarCameraFullscreen()">
+                <i class="bi bi-upc-scan me-2"></i> Abrir Leitor Contínuo
+            </button>
+
+            <!-- Digitação Manual caso a etiqueta esteja rasgada -->
+            <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">Ou digite o código manualmente:</label>
+            <div class="input-group mb-4 shadow-sm">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-keyboard text-primary fs-5"></i></span>
+                <input type="text" id="input-codigo-manual" class="form-control form-control-lg fw-bold border-start-0 ps-0" placeholder="Código..." onkeypress="if(event.key === 'Enter') adicionarPacoteManual()">
+                <button class="btn btn-primary fw-bold px-4" type="button" onclick="adicionarPacoteManual()">Incluir</button>
+            </div>
+            
+            <div class="mb-3">
+                <label class="fw-bold text-muted" style="font-size: 0.85rem;">Pacotes lidos (<span id="count-scan">0</span>):</label>
+                <textarea class="form-control bg-light" id="lista-codigos" rows="2" readonly placeholder="Nenhum pacote lido..."></textarea>
+            </div>
+            
+            <!-- Seleção de Destino via Botões -->
+            <div class="mb-4 pt-3 border-top">
+                <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">1. Selecione o Bloco:</label>
+                <div id="grid-blocos" class="d-flex flex-wrap gap-2 mb-3"></div>
+
+                <div id="container-aptos" class="d-none">
+                    <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">2. Selecione o Apto (Bloco <span id="lbl-bloco-selecionado"></span>):</label>
+                    <div id="grid-aptos" class="d-flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+            
+            <button id="btn-salvar-pacote" class="btn btn-success w-100 py-3 fs-5 d-none shadow-sm fw-bold" onclick="salvarEncomenda()">
+                <i class="bi bi-check2-circle"></i> Salvar e Guardar
+            </button>
+        </div>
+    </div>
+
+    <!-- TELA 4: ENTREGAR (Pendentes) -->
+    <div id="screen-pendentes" class="app-screen container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Localizar Encomenda</h5>
+        </div>
+        
+        <div class="apex-card mb-4">
+            <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">1. Selecione o Bloco:</label>
+            <div id="grid-blocos-pendentes" class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted small">Carregando dados...</span>
+            </div>
+
+            <div id="container-aptos-pendentes" class="d-none">
+                <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">2. Selecione o Apto (Bloco <span id="lbl-bloco-pendente"></span>):</label>
+                <div id="grid-aptos-pendentes" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <div id="area-entrega-pendente" class="d-none">
+            <ul id="lista-pendentes" class="list-group list-group-flush rounded-4 shadow-sm border-0">
+                <!-- Pacotes aparecerão aqui -->
+            </ul>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- TELA EXTRA: LIVRO DE OCORRÊNCIAS -->
+    <!-- ========================================== -->
+    <div id="screen-ocorrencias" class="app-screen container mt-4 mb-5">
+        <h5 class="fw-bold mb-3" style="color: var(--apex-brand);"><i class="bi bi-shield-exclamation me-2"></i>Livro de Ocorrências</h5>
+        
+        <div class="apex-card">
+            <div class="alert bg-danger bg-opacity-10 border border-danger text-danger shadow-sm rounded-4 small fw-bold mb-4">
+                <i class="bi bi-info-circle-fill me-1"></i> O registro feito aqui será enviado imediatamente para o e-mail do Síndico e da Administradora.
+            </div>
+
+            <!-- Chave de Vínculo -->
+            <div class="form-check form-switch mb-4 p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between shadow-sm">
+                <label class="form-check-label fw-bold text-dark m-0" for="switch-vinculo">Vincular a um Apartamento?</label>
+                <input class="form-check-input fs-4 m-0" type="checkbox" role="switch" id="switch-vinculo" onchange="toggleAptosOcorrencia(this.checked)">
+            </div>
+
+            <!-- Seleção de Destino (Nasce oculta) -->
+            <div id="box-vinculo-ocorrencia" class="d-none mb-4 p-3 border rounded-3 bg-light shadow-sm">
+                <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">1. Selecione o Bloco:</label>
+                <div id="grid-blocos-oc" class="d-flex flex-wrap gap-2 mb-3"></div>
+
+                <div id="container-aptos-oc" class="d-none">
+                    <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">2. Selecione o Apto (Bloco <span id="lbl-bloco-oc"></span>):</label>
+                    <div id="grid-aptos-oc" class="d-flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
+            <!-- NOVO: NOME DO RESPONSÁVEL -->
+            <label class="fw-bold text-danger mb-2" style="font-size: 0.85rem;">* Nome de quem está registrando:</label>
+            <input type="text" id="txt-nome-registrador" class="form-control bg-light shadow-sm mb-3 border-danger" placeholder="Ex: Porteiro João, Síndico Marcos...">
+
+            <!-- Relato -->
+            <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">Relato da Ocorrência:</label>
+            <textarea id="txt-ocorrencia" class="form-control bg-light shadow-sm mb-3" rows="5" placeholder="Descreva o que aconteceu de forma clara e objetiva..."></textarea>
+
+            <!-- ANEXAR FOTO -->
+            <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">Anexar Foto (Opcional):</label>
+            <div class="mb-4">
+                <!-- Input invisível que abre a câmera ou galeria do celular -->
+                <input type="file" id="input-foto-oc" accept="image/*" class="d-none" onchange="processarFotoOcorrencia(event)">
+                
+                <!-- Botão bonitão -->
+                <button type="button" class="btn btn-outline-secondary w-100 fw-bold py-3 bg-white shadow-sm" onclick="document.getElementById('input-foto-oc').click()">
+                    <i class="bi bi-camera-fill me-2"></i> Tirar Foto ou Anexar
+                </button>
+                
+                <!-- Preview da foto selecionada (Nasce oculto) -->
+                <div id="preview-foto-box" class="d-none mt-3 position-relative text-center p-2 border rounded-3 bg-light">
+                    <img id="preview-foto-oc" src="" style="max-width: 100%; max-height: 250px; border-radius: 8px;">
+                    <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 shadow" onclick="removerFotoOc()"><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button id="btn-cancelar-edicao-oc" class="btn btn-light border fw-bold w-25 shadow-sm d-none" onclick="cancelarEdicaoOcorrencia()">Cancelar</button>
+                <button id="btn-enviar-ocorrencia" class="btn btn-danger flex-grow-1 fw-bold py-3 fs-5 shadow-sm" onclick="enviarOcorrencia()">
+                    <i class="bi bi-send-fill me-2"></i> Registrar Ocorrência
+                </button>
+            </div>
+        </div>
+
+        <!-- LISTA DE OCORRÊNCIAS FOI MOVIDA PARA CÁ -->
+        <h6 class="fw-bold text-muted mt-5 mb-2"><i class="bi bi-shield-exclamation me-1"></i> Histórico de Ocorrências</h6>
+        <div class="apex-card border-danger p-3 bg-white shadow-sm mb-5">
+            <div class="input-group mb-3 shadow-sm">
+                <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" id="busca-ocorrencia-sindico" class="form-control border-start-0 ps-0 bg-light" placeholder="Pesquisar por apto, relato ou data..." onkeyup="filtrarOcorrenciasSindico()">
+            </div>
+            <div id="lista-ocorrencias-sindico" class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                <span class="text-muted small">Carregando ocorrências...</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TELA 5: GESTÃO DE APARTAMENTOS E PINs (COM BOTÕES DE PESQUISA) -->
+    <div id="screen-aptos" class="app-screen container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Moradores (PINs)</h5>
+        </div>
+        <div class="alert bg-white border shadow-sm rounded-4 text-muted" style="font-size: 0.85rem;">
+            <i class="bi bi-info-circle text-primary"></i> Selecione o apartamento para consultar ou resetar o <strong>PIN</strong> do morador.
+        </div>
+        
+        <div class="apex-card mb-4">
+            <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">1. Selecione o Bloco:</label>
+            <div id="grid-blocos-pins" class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted small">Carregando dados...</span>
+            </div>
+
+            <div id="container-aptos-pins" class="d-none">
+                <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">2. Selecione o Apto (Bloco <span id="lbl-bloco-pin"></span>):</label>
+                <div id="grid-aptos-pins" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Área onde aparece o PIN após clicar -->
+        <div id="area-resultado-pin" class="d-none mb-5">
+            <ul id="lista-aptos" class="list-group list-group-flush rounded-4 shadow-sm border-0">
+                <!-- Preenchido via JS -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- TELA 7: HISTÓRICO / AUDITORIA DA PORTARIA (COM BOTÕES) -->
+    <div id="screen-historico" class="app-screen container mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Auditoria de Pacotes</h5>
+        </div>
+        
+        <!-- Seleção Inteligente do Histórico -->
+        <div class="apex-card mb-4">
+            <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">1. Selecione o Bloco:</label>
+            <div id="grid-blocos-historico" class="d-flex flex-wrap gap-2 mb-3">
+                <span class="text-muted small">Carregando dados...</span>
+            </div>
+
+            <div id="container-aptos-historico" class="d-none">
+                <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">2. Selecione o Apto (Bloco <span id="lbl-bloco-historico"></span>):</label>
+                <div id="grid-aptos-historico" class="d-flex flex-wrap gap-2"></div>
+            </div>
+        </div>
+
+        <!-- Área onde os pacotes daquele Apto aparecem -->
+        <div id="area-resultado-historico" class="d-none mb-5">
+            <div id="lista-historico-portaria" class="d-flex flex-column gap-3">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA 6: PAINEL DO MORADOR (PREMIUM) -->
+    <div id="screen-morador" class="app-screen container mt-4 mb-5">
+        
+        <!-- Estado 1: Morador sem Apartamento (Pede o PIN) -->
+        <div id="morador-sem-vinculo" class="d-none">
+            <div class="text-center mt-5 mb-4">
+                <div style="background: var(--apex-brand); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; box-shadow: 0 10px 20px rgba(5,36,57,0.3);">
+                    <i class="bi bi-key-fill text-white" style="font-size: 2.5rem;"></i>
+                </div>
+                <h4 class="fw-bold mt-4 text-dark">Bem-vindo, Morador!</h4>
+                <p class="text-muted">Vincule-se ao seu apartamento para visualizar as suas encomendas em tempo real.</p>
+            </div>
+            <div class="apex-card text-center p-4 border-0 shadow-lg">
+                <label class="fw-bold mb-2" style="color: var(--apex-brand);">Digite o PIN da Portaria:</label>
+                <input type="text" id="input-pin-morador" class="form-control form-control-lg text-center fw-bold letter-spacing-1 text-uppercase mb-3" placeholder="Ex: A1B2C3" maxlength="6" style="font-size: 1.5rem; letter-spacing: 5px;">
+                <button class="btn btn-apex py-3 w-100 fw-bold fs-5" id="btn-vincular-pin" onclick="vincularApartamento()">Acessar Meu Painel</button>
+            </div>
+        </div>
+
+        <!-- Estado 2: Morador com Apartamento (Dashboard + Lista) -->
+        <div id="morador-com-vinculo" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Meu Painel</h5>
+                <span class="badge bg-dark px-3 py-2 fs-6 rounded-pill shadow-sm" id="lbl-meu-apto">Bloco -- | Apto --</span>
+            </div>
+
+            <!-- MENU DE ABAS (TABS) -->
+            <div class="morador-tabs shadow-sm">
+                <div class="morador-tab active" onclick="trocarAbaMorador('aba-encomendas', this)"><i class="bi bi-box-seam me-1"></i> Encomendas</div>
+                <div class="morador-tab" onclick="trocarAbaMorador('aba-lazer', this)"><i class="bi bi-calendar-event me-1"></i> Área de Lazer</div>
+            </div>
+
+            <!-- ABA 1: ENCOMENDAS (CLEAN) -->
+            <div id="aba-encomendas" class="tab-content active">
+                <p class="text-muted small text-center mb-4">Toque nos cartões abaixo para visualizar os códigos de barra e detalhes.</p>
+                <div class="row text-center mb-4">
+                    <div class="col-6">
+                        <div class="apex-card bg-warning text-dark border-0 shadow-sm p-3" onclick="abrirModalPacotesMorador('pendente')" style="cursor: pointer;">
+                            <h1 id="morador-dash-pendentes" class="mb-0 fw-bold" style="font-size: 2.5rem;">0</h1>
+                            <small class="fw-bold text-uppercase" style="font-size: 0.75rem;">Aguardando</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="apex-card bg-success text-white border-0 shadow-sm p-3" onclick="abrirModalPacotesMorador('entregue')" style="cursor: pointer;">
+                            <h1 id="morador-dash-entregues" class="mb-0 fw-bold" style="font-size: 2.5rem;">0</h1>
+                            <small class="fw-bold text-uppercase" style="font-size: 0.75rem;">Retirados</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apex-card p-3 text-center border-0 shadow-sm" style="cursor: pointer;" onclick="abrirModalPacotesMorador('todos')">
+                    <h6 class="fw-bold text-dark m-0"><i class="bi bi-clock-history me-2"></i>Ver Histórico Completo</h6>
+                </div>
+            </div>
+
+            <!-- ABA 2: ÁREA DE LAZER (RESERVAS) -->
+            <div id="aba-lazer" class="tab-content">
+                
+                <!-- CARD CADEADO (Venda Cruzada) -->
+                <div id="morador-card-cadeado" class="apex-card text-center p-4 border-0 shadow-sm d-none" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); position: relative; overflow: hidden;">
+                    <i class="bi bi-lock-fill text-white opacity-25" style="font-size: 8rem; position: absolute; top: -20px; right: -20px;"></i>
+                    <div style="position: relative; z-index: 2;">
+                        <span class="badge mb-3 text-white px-3 py-2" style="background: #38bdf8;">Módulo Premium</span>
+                        <h5 class="fw-bold text-white mb-2">Reservas Inteligentes</h5>
+                        <p class="text-light opacity-75 small mb-4">Seu condomínio ainda não possui a gestão digital de áreas comuns da ApexSys.</p>
+                        <button class="btn btn-light fw-bold w-100 shadow-sm" style="color: #0f172a;" onclick="alert('Funcionalidade indisponível. Fale com o Síndico para ativar o ApexSys Reservas!')">
+                            <i class="bi bi-whatsapp text-success me-2"></i> Pedir ao Síndico
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARD LIBERADO (Os botões nascerão dentro da div 'area-botoes-lazer' via JS) -->
+                <div id="morador-card-liberado" class="d-none">
+                    <h6 class="fw-bold text-dark mb-3">Espaços Disponíveis</h6>
+                    
+                    <div class="row g-3" id="area-botoes-lazer">
+                        <!-- O JAVASCRIPT CARREGA OS BOTÕES DOS SALÕES AQUI DENTRO -->
+                    </div>
+                    
+                    <h6 class="fw-bold text-muted mt-4 mb-3"><i class="bi bi-card-checklist me-2"></i>Minhas Reservas Ativas</h6>
+                    <div id="lista-minhas-reservas" class="d-flex flex-column gap-3 mb-4">
+                        <!-- O JS VAI PREENCHER AQUI -->
+                        <div class="text-center p-4 border rounded-4 bg-white shadow-sm"><span class="text-muted small">Nenhuma reserva futura encontrada.</span></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CALENDÁRIO DE RESERVA TELA CHEIA -->
+    <div id="modal-reserva" class="modal-assinatura">
+        <div class="canvas-container" style="justify-content: flex-start; overflow-y: auto;">
+            <div class="d-flex justify-content-between align-items-center mb-4 mt-2 border-bottom pb-3">
+                <div>
+                    <h4 class="fw-bold text-dark mb-0" id="nome-espaco-reserva">Espaço</h4>
+                    <span class="badge bg-primary mt-1" id="valor-espaco-reserva">R$ 0,00</span>
+                </div>
+                <button class="btn btn-light border text-danger fw-bold" onclick="fecharCalendarioReserva()">X Cancelar</button>
+            </div>
+            
+            <h6 class="fw-bold text-muted mb-3"><i class="bi bi-calendar-week me-2"></i>Escolha uma Data (Próx. 30 dias)</h6>
+            
+            <!-- Calendário Dinâmico -->
+            <div class="calendario-scroll" id="lista-dias-calendario">
+                <!-- Gerado via JS -->
+            </div>
+
+            <div class="alert bg-light border text-muted mt-3 mb-4" style="font-size: 0.8rem;">
+                <i class="bi bi-info-circle me-1"></i> Dias em <span class="text-danger fw-bold">vermelho</span> já estão reservados por outros moradores.
+            </div>
+
+            <!-- Caixa de Confirmação Final -->
+            <div id="box-confirmacao-reserva" class="apex-card border-0 shadow-sm d-none mt-auto mb-3" style="background: #f8fafc;">
+                <h6 class="fw-bold text-dark text-center border-bottom pb-2 mb-3">Resumo da Reserva</h6>
+                
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Data:</span>
+                    <strong class="text-dark" id="lbl-data-escolhida">--/--/----</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted small">Valor a cobrar:</span>
+                    <strong class="text-success" id="lbl-valor-escolhido">R$ 0,00</strong>
+                </div>
+
+                <div class="mt-3 pt-3 border-top">
+                    <!-- Botão para ler o termo gigante -->
+                    <button class="btn btn-outline-dark w-100 fw-bold mb-3" onclick="abrirLeituraRegulamento()"><i class="bi bi-book me-2"></i> Ler Regulamento Interno</button>
+
+                    <div class="form-check d-none" id="box-aceite-termo">
+                        <input class="form-check-input" type="checkbox" id="check-termo-reserva" style="transform: scale(1.3); margin-top: 5px; cursor: pointer;">
+                        <label class="form-check-label text-dark fw-bold ms-2" for="check-termo-reserva" style="font-size: 0.85rem;">
+                            Declaro ter lido e concordado com as regras do condomínio e política de multa.
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn btn-apex w-100 fw-bold py-3 mt-4" id="btn-concluir-reserva" onclick="finalizarReservaMorador()">
+                    <i class="bi bi-check2-circle me-1"></i> Confirmar e Assinar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA DE LEITURA DO REGULAMENTO (SOBREPÕE TUDO) -->
+    <div id="modal-leitura-regras" class="modal-assinatura" style="z-index: 3005; background: #ffffff; flex-direction: column;">
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom shadow-sm">
+            <h5 class="fw-bold m-0 text-dark"><i class="bi bi-file-earmark-text me-2"></i> Regulamento</h5>
+            <button class="btn btn-light border text-danger fw-bold" onclick="document.getElementById('modal-leitura-regras').classList.remove('active')">X</button>
+        </div>
+        <div class="p-4" style="overflow-y: auto; flex-grow: 1; font-size: 0.95rem; color: #334155; line-height: 1.6;" id="txt-regras-espaco">
+            <!-- O texto vem do banco pra cá -->
+        </div>
+        <div class="p-3 border-top shadow-lg text-center" style="background: #f8fafc;">
+            <button class="btn btn-apex bg-success border-0 w-100 fw-bold py-3 fs-5" onclick="concordarRegulamento()"><i class="bi bi-check-lg me-2"></i> Li e Concordo</button>
+        </div>
+    </div>
+
+    <!-- MODAL: GESTÃO DE CONVIDADOS (LISTA VIP) -->
+    <div class="modal fade" id="modal-convidados" tabindex="-1" style="z-index: 3005;">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg" style="background: var(--apex-bg); color: var(--apex-text);">
+                <div class="modal-header border-bottom border-secondary" style="background: #1e293b;">
+                    <h5 class="modal-title fw-bold text-white"><i class="bi bi-card-list text-info me-2"></i> Lista de Convidados</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="gc-reserva-id">
+                    
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <strong class="text-dark" id="gc-espaco-nome">Espaço</strong>
+                        <span class="badge bg-primary fs-6" id="gc-contador">0 / 50</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="fw-bold text-muted small mb-2">Importação Rápida (Copie e Cole do WhatsApp)</label>
+                        <textarea id="gc-importacao" class="form-control mb-2" rows="3" placeholder="Ex:&#10;Carlos Silva&#10;Maria Oliveira&#10;João Souza"></textarea>
+                        <button class="btn btn-outline-primary w-100 fw-bold shadow-sm" onclick="importarConvidadosMassa()">
+                            <i class="bi bi-plus-circle me-1"></i> Adicionar à Lista
+                        </button>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-people-fill me-1"></i> Convidados Confirmados</h6>
+                    <ul id="gc-lista-atual" class="list-group list-group-flush rounded-3 shadow-sm border">
+                        <!-- Preenchido via JS -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ASSINATURA TELA CHEIA -->
+    <div id="modal-assinatura" class="modal-assinatura">
+        <!-- O CONTEÚDO DO MODAL CONTINUA INTACTO AQUI DENTRO (NÃO APAGUE) -->
+        <div class="canvas-container">
+            <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
+                <div>
+                    <h4 class="fw-bold text-dark mb-0">Assinatura</h4>
+                    <p class="text-muted small m-0" id="assinatura-desc">Bloco X - Apto Y</p>
+                </div>
+                <button class="btn btn-light border text-danger fw-bold" onclick="fecharAssinatura()">X Cancelar</button>
+            </div>
+            <canvas id="signature-pad"></canvas>
+            <div class="d-flex gap-2 pb-2">
+                <button class="btn btn-light border w-25 fw-bold text-muted" onclick="limparAssinatura()"><i class="bi bi-eraser-fill"></i></button>
+                <button class="btn btn-apex bg-success border-0 w-75 py-3 fs-5" id="btn-confirmar-entrega" onclick="confirmarEntrega()">Concluir Entrega</button>
+            </div>
+        </div>
+    </div>
+
+   <!-- BOTTOM NAVIGATION -->
+    <nav id="bottom-nav" class="bottom-nav d-none" style="padding: 10px 0 15px 0;">
+        <a href="#" class="nav-item active" style="width: 20%;" onclick="navigate('screen-dashboard', this)"><i class="bi bi-grid"></i> Início</a>
+        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-scan', this)"><div class="fab-scan" style="width: 50px; height: 50px; font-size: 1.4rem; transform: translateY(-20px);"><i class="bi bi-qr-code-scan"></i></div></a>
+        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-pendentes', this)"><i class="bi bi-box-seam"></i> Entregar</a>
+        
+        <!-- O NOVO BOTÃO DE OCORRÊNCIAS -->
+        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-ocorrencias', this)"><i class="bi bi-shield-exclamation"></i> Ocorrência</a>
+        
+        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-historico', this)"><i class="bi bi-clock-history"></i> Histórico</a>
+        <a href="#" id="btn-nav-eventos" class="nav-item d-none" style="width: 20%;" onclick="navigate('screen-checkin', this)"><i class="bi bi-calendar2-check"></i> Eventos</a>
+        <a href="#" class="nav-item d-none" style="width: 20%;" onclick="navigate('screen-aptos', this)"><i class="bi bi-key"></i> Aptos</a>
+        <a href="#" id="btn-nav-sindico" class="nav-item d-none" style="width: 20%;" onclick="navigate('screen-sindico', this)"><i class="bi bi-gear"></i> Síndico</a>
+    </nav>
+
+    <!-- TELA 8: CHECK-IN DE CONVIDADOS (VISÃO DO PORTEIRO) -->
+    <div id="screen-checkin" class="app-screen container mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Eventos de Hoje</h5>
+            <button class="btn btn-sm btn-light border text-muted" onclick="carregarEventosHoje()"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+
+        <!-- Lista de Festas do Dia -->
+        <div id="lista-eventos-hoje" class="d-flex flex-column gap-3 mb-4">
+            <div class="text-center p-4 border rounded-4 bg-white shadow-sm text-muted">
+                <span class="spinner-border spinner-border-sm"></span> Buscando eventos...
+            </div>
+        </div>
+
+        <!-- Lista de Convidados da Festa Selecionada (Fica oculta até clicar na festa) -->
+        <div id="area-lista-convidados" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-2 mt-4 border-bottom pb-2">
+                <div>
+                    <h6 class="fw-bold m-0 text-dark" id="ci-nome-espaco">Espaço</h6>
+                    <small class="text-muted fw-bold" id="ci-bloco-apto">Bloco X - Apto Y</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary fs-6" id="ci-contador-presentes">0 / 0</span>
+                    <small class="d-block text-muted" style="font-size: 10px;">Presentes</small>
+                </div>
+            </div>
+            
+            <!-- Barra de Busca -->
+            <input type="text" id="busca-convidado" class="form-control mb-3" placeholder="Buscar convidado pelo nome..." onkeyup="filtrarCheckin()">
+
+            <ul id="lista-checkin-portaria" class="list-group list-group-flush rounded-3 shadow-sm border mb-5">
+                <!-- JS Preenche Aqui -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- TELA 9: ADMIN DO SÍNDICO -->
+    <div id="screen-sindico" class="app-screen container mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Gestão do Síndico</h5>
+            <button class="btn btn-sm btn-light border text-muted" onclick="carregarEspacosSindico()"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+
+        <!-- AUTOMAÇÃO FINANCEIRA -->
+        <div class="apex-card border-success p-3 bg-success bg-opacity-10 shadow-sm mb-4">
+            <h6 class="fw-bold text-success border-bottom border-success pb-2 mb-3"><i class="bi bi-envelope-paper me-1"></i> Automação Mensal (Faturamento)</h6>
+            <div class="row g-2 align-items-end">
+                <div class="col-6">
+                    <label class="form-label small text-dark fw-bold m-0">E-mail da Contabilidade</label>
+                    <input type="email" id="sind-email-contab" class="form-control form-control-sm border-success" placeholder="exemplo@contabilidade.com">
+                </div>
+                <div class="col-3">
+                    <label class="form-label small text-dark fw-bold m-0">Dia Fecha.</label>
+                    <input type="number" id="sind-dia-fechamento" class="form-control form-control-sm border-success text-center fw-bold" placeholder="Ex: 31" min="1" max="31">
+                </div>
+                <div class="col-3">
+                    <button class="btn btn-success w-100 fw-bold py-1 shadow-sm" id="btn-salvar-email" onclick="salvarAutomacaoFinanceira()"><i class="bi bi-floppy"></i> Salvar</button>
+                </div>
+                <div class="col-12 mt-3">
+                    <button class="btn btn-outline-success w-100 fw-bold py-2 shadow-sm" id="btn-fechar-manual" onclick="dispararFechamentoNuvem()"><i class="bi bi-cloud-arrow-up-fill me-2"></i> Processar e Enviar Manualmente</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário de Criação / Edição -->
+        <div class="apex-card border-primary p-3 bg-white shadow-sm mb-4">
+            <h6 class="fw-bold text-dark border-bottom pb-2 mb-3" id="titulo-form-espaco"><i class="bi bi-plus-circle me-1"></i> Adicionar Novo Espaço</h6>
+            <div class="row g-2">
+                <div class="col-8"><label class="form-label small text-muted fw-bold m-0">Nome do Espaço</label><input type="text" id="ns-nome" class="form-control form-control-sm" placeholder="Ex: Salão de Festas"></div>
+                <div class="col-4"><label class="form-label small text-muted fw-bold m-0">Taxa (R$)</label><input type="number" id="ns-taxa" class="form-control form-control-sm" placeholder="150.00" step="0.01"></div>
+                
+                <div class="col-4"><label class="form-label small text-muted fw-bold m-0">Capacidade Máx.</label><input type="number" id="ns-cap" class="form-control form-control-sm" placeholder="Ex: 50"></div>
+                <div class="col-4"><label class="form-label small text-muted fw-bold m-0 text-danger">Multa Canc. (R$)</label><input type="number" id="ns-multa" class="form-control form-control-sm border-danger" placeholder="50.00"></div>
+                <div class="col-4">
+                    <label class="form-label small text-muted fw-bold m-0 text-danger" title="Com quantos dias de antecedência começa a cobrar a multa?">Prazo Multa (Dias)</label>
+                    <input type="number" id="ns-dias" class="form-control form-control-sm border-danger" placeholder="Ex: 5" onkeyup="document.getElementById('lbl-horas-calc').innerText = (this.value * 24) || 0">
+                    <small class="text-muted d-block mt-1" style="font-size: 10px;">= <span id="lbl-horas-calc" class="fw-bold text-danger">0</span> horas antes</small>
+                </div>
+                
+                <div class="col-12 mt-2"><label class="form-label small text-muted fw-bold m-0">Regulamento</label><textarea id="ns-regras" class="form-control form-control-sm" rows="3" placeholder="Ex: 1. Limpar após o uso. 2. Somente até 22h."></textarea></div>
+                
+                <!-- Botões de Ação -->
+                <div class="col-12 mt-3 d-flex gap-2">
+                    <button class="btn btn-light border fw-bold w-25 d-none" id="btn-cancelar-edicao" onclick="cancelarEdicaoEspaco()">Cancelar</button>
+                    <button class="btn btn-apex fw-bold flex-grow-1" id="btn-salvar-espaco" onclick="salvarEspaco()"><i class="bi bi-floppy"></i> Salvar Espaço</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de Espaços Cadastrados -->
+        <h6 class="fw-bold text-muted mb-2"><i class="bi bi-list-check me-1"></i> Espaços Ativos</h6>
+        <div id="lista-espacos-sindico" class="d-flex flex-column gap-3 mb-5">
+            <span class="text-muted small">Carregando...</span>
+        </div>
+
+    </div> <!-- ✅ A DIV QUE FECHA A TELA DO SÍNDICO DEVE FICAR AQUI, NO FINAL -->
+
+    <!-- MOTOR DE MODAIS DO BOOTSTRAP (CORREÇÃO DE ERRO) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- MOTOR GERADOR DE PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ==========================================
+        // CONFIGURAÇÕES DO SUPABASE
+        // ==========================================
+        const supabaseUrl = 'https://gscviiewgnzvfasombzn.supabase.co';
+        const supabaseKey = 'sb_publishable_VEKzpmWyexy6SCoc6QdfPg_jGNOQ8es'; // <- COLOQUE SUA CHAVE AQUI!
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let html5QrcodeScanner = null;
+        let pacotesLidos = [];
+        
+        // Dados do usuário logado (Porteiro)
+        let meuPerfilId = null;
+        let meuCondominioId = null;
+
+        // ==========================================
+        // NAVEGAÇÃO E SESSÃO
+        // ==========================================
+        function navigate(screenId, navElement = null) {
+            document.querySelectorAll('.app-screen').forEach(el => el.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            
+            if(navElement) {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
+            }
+            
+            // Agora o app sabe que precisa carregar dados específicos de cada tela!
+            if(screenId === 'screen-dashboard' || screenId === 'screen-pendentes') carregarDados();
+            if(screenId === 'screen-aptos') carregarAptos();
+            if(screenId === 'screen-historico') carregarHistoricoPortaria(); 
+            if(screenId === 'screen-checkin') carregarEventosHoje();
+            
+            // A LINHA NOVA: CARREGA A LISTA QUANDO ABRE A TELA DE OCORRÊNCIA
+            if(screenId === 'screen-ocorrencias') carregarOcorrenciasSindico();
+
+            if(screenId === 'screen-sindico') {
+                carregarEspacosSindico();
+            }
+        } // <--- ESSA É A CHAVE QUE FECHA A FUNÇÃO NAVIGATE.
+
+        function toggleAppShell(show) {
+            if(show) {
+                document.getElementById('top-navbar').classList.remove('d-none');
+                document.getElementById('bottom-nav').classList.remove('d-none');
+                document.body.style.backgroundColor = 'var(--apex-bg)';
+            } else {
+                document.getElementById('top-navbar').classList.add('d-none');
+                document.getElementById('bottom-nav').classList.add('d-none');
+                document.body.style.backgroundColor = 'var(--apex-brand)';
+            }
+        }
+
+        // ==========================================
+        // AUTENTICAÇÃO E INICIALIZAÇÃO DOS DADOS
+        // ==========================================
+        async function carregarPerfil() {
+            const { data: userAuth } = await supabaseClient.auth.getUser();
+            if(userAuth?.user) {
+                meuPerfilId = userAuth.user.id;
+                
+                const { data: perfil } = await supabaseClient.from('perfis')
+                    .select('condominio_id, role, apartamento_id')
+                    .eq('id', meuPerfilId).single();
+                
+                if(perfil) {
+                    meuCondominioId = perfil.condominio_id;
+
+                    // BUSCA SE O CONDOMÍNIO COMPROU O MÓDULO DE RESERVAS (E GERA A TELA NA HORA)
+                    // Usamos maybeSingle para não dar erro 406 se o RLS bloquear
+                    const { data: condData } = await supabaseClient.from('condominios').select('modulo_reservas').eq('id', meuCondominioId).maybeSingle();
+                    if(condData && condData.modulo_reservas === true) {
+                        document.getElementById('morador-card-cadeado').classList.add('d-none');
+                        document.getElementById('morador-card-liberado').classList.remove('d-none');
+                    } else {
+                        document.getElementById('morador-card-cadeado').classList.remove('d-none');
+                        document.getElementById('morador-card-liberado').classList.add('d-none');
+                    }
+                    
+                    if(perfil.role === 'morador') {
+                        // É MORADOR: Mostra o fundo cinza claro, esconde a barra inferior
+                        document.body.style.backgroundColor = 'var(--apex-bg)';
+                        document.getElementById('top-navbar').classList.remove('d-none');
+                        document.getElementById('bottom-nav').classList.add('d-none'); // GARANTE que a barra não apareça
+                        
+                        navigate('screen-morador');
+                        
+                        if(perfil.apartamento_id) {
+                            document.getElementById('morador-sem-vinculo').classList.add('d-none');
+                            document.getElementById('morador-com-vinculo').classList.remove('d-none');
+                            carregarPacotesMorador(perfil.apartamento_id);
+                            carregarEspacosLazer(meuCondominioId); // <--- A MÁGICA ENTRA AQUI!
+                        } else {
+                            document.getElementById('morador-sem-vinculo').classList.remove('d-none');
+                            document.getElementById('morador-com-vinculo').classList.add('d-none');
+                        }
+                    } else {
+                        // É PORTEIRO/SÍNDICO: Mostra o fundo e a barra
+                        document.body.style.backgroundColor = 'var(--apex-bg)';
+                        document.getElementById('top-navbar').classList.remove('d-none');
+                        document.getElementById('bottom-nav').classList.remove('d-none');
+                        
+                        // LIGA O BOTÃO DE EVENTOS SE O PRÉDIO PAGOU O MÓDULO (Cross-sell Validation)
+                        if(condData && condData.modulo_reservas === true) {
+                            document.getElementById('btn-nav-eventos').classList.remove('d-none');
+                        }
+
+                        // SE FOR O SÍNDICO LOGADO, LIGA O BOTÃO DE ADMIN DELE
+                        if(perfil.role === 'sindico' || perfil.role === 'superadmin') {
+                            document.getElementById('btn-nav-sindico').classList.remove('d-none');
+                        }
+
+                        // MÁGICA QUE FALTAVA: Força a busca dos blocos pro Porteiro não ficar esperando
+                        carregarAptosSilencioso();
+
+                        navigate('screen-dashboard', document.querySelectorAll('.nav-item')[0]);
+                        carregarDados(); 
+                    }
+                }
+            }
+        }
+
+        // ==========================================
+        // FLUXO DO MORADOR (COM FILTROS INTERATIVOS)
+        // ==========================================
+        let pacotesMoradorLocal = []; // Guarda os pacotes na memória para filtrar rápido sem ir no banco
+
+        async function carregarPacotesMorador(aptoId) {
+            const { data: aptoInfo } = await supabaseClient
+                .from('apartamentos').select('bloco, numero').eq('id', aptoId).single();
+            
+            if(aptoInfo) {
+                document.getElementById('lbl-meu-apto').innerText = `Bloco ${aptoInfo.bloco} | Apto ${aptoInfo.numero}`;
+            }
+
+            const { data: meusPacotes, error } = await supabaseClient
+                .from('encomendas')
+                .select('*')
+                .eq('condominio_id', meuCondominioId)
+                .eq('bloco', aptoInfo.bloco)
+                .eq('apto', aptoInfo.numero)
+                .order('data_recebimento', { ascending: false });
+
+            if(!error && meusPacotes) {
+                pacotesMoradorLocal = meusPacotes;
+                
+                // Atualiza números do painel
+                document.getElementById('morador-dash-pendentes').innerText = meusPacotes.filter(p => p.status === 'pendente').length;
+                document.getElementById('morador-dash-entregues').innerText = meusPacotes.filter(p => p.status === 'entregue').length;
+                
+                
+
+                // Renderiza a tela inicialmente com 'todos'
+                filtrarPacotes('todos');
+                
+                // === O MOTOR DO TEMPO REAL (MODO SILENCIOSO) ===
+                supabaseClient.removeAllChannels(); 
+
+                const canalMorador = supabaseClient.channel('realtime_encomendas');
+
+                canalMorador.on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'encomendas' },
+                    (payload) => {
+                        const p = payload.new;
+                        
+                        if(p.condominio_id === meuCondominioId && p.bloco === aptoInfo.bloco && p.apto === aptoInfo.numero) {
+                            try { let ctx = new (window.AudioContext || window.webkitAudioContext)(); let osc = ctx.createOscillator(); osc.connect(ctx.destination); osc.frequency.value = 600; osc.start(); setTimeout(() => osc.stop(), 200); } catch(e) {}
+                            
+                            carregarPacotesMorador(aptoId);
+
+                            // CORREÇÃO: Busca o número não importa como esteja salvo
+                            let numPacote = p.codigo_barras || p.codigo_rastreio || 'Sem Numeração';
+
+                            document.getElementById('toast-realtime-msg').innerHTML = `Cód: <strong style="font-family: monospace; font-size: 1.1em;">${numPacote}</strong>`;
+                            document.getElementById('toast-realtime').classList.remove('d-none');
+                            setTimeout(() => { document.getElementById('toast-realtime').classList.add('d-none'); }, 6000);
+                        }
+                    }
+                ).subscribe((status) => {
+                    if(status === 'CHANNEL_ERROR') {
+                        // Plano B invisível: Se a internet do morador estiver falhando, tenta recarregar silenciosamente a cada 10s.
+                        setTimeout(() => carregarPacotesMorador(aptoId), 10000); 
+                    }
+                });
+            }
+        }
+
+        function filtrarPacotes(tipo) {
+            const listaEl = document.getElementById('lista-pacotes-morador');
+            const tituloFiltro = document.getElementById('titulo-filtro-morador');
+            const btnLimpar = document.getElementById('btn-limpar-filtro');
+            
+            if(!listaEl) return; 
+            listaEl.innerHTML = '';
+            
+            if(tipo === 'pendente') {
+                if(tituloFiltro) tituloFiltro.innerText = "Aguardando na Portaria";
+                if(btnLimpar) btnLimpar.classList.remove('d-none');
+            } else if(tipo === 'entregue') {
+                if(tituloFiltro) tituloFiltro.innerText = "Já Retirados";
+                if(btnLimpar) btnLimpar.classList.remove('d-none');
+            } else {
+                if(tituloFiltro) tituloFiltro.innerText = "Histórico Completo";
+                if(btnLimpar) btnLimpar.classList.add('d-none');
+            }
+
+            let pacotesFiltrados = pacotesMoradorLocal;
+            if(tipo !== 'todos') {
+                pacotesFiltrados = pacotesMoradorLocal.filter(p => p.status === tipo);
+            }
+
+            if(pacotesFiltrados.length > 0) {
+                pacotesFiltrados.forEach(pacote => {
+                    const dataChegada = new Date(pacote.data_recebimento).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                    
+                    let numeroDoPacote = pacote.codigo_barras || 'S/N';
+                    
+                    // LÓGICA DE UX PARA CÓDIGOS GIGANTES: Corta se tiver mais de 25 caracteres, mas deixa o código inteiro no botão de copiar
+                    let codigoResumido = numeroDoPacote.length > 25 ? numeroDoPacote.substring(0, 10) + '...' + numeroDoPacote.substring(numeroDoPacote.length - 8) : numeroDoPacote;
+                    
+                    if(pacote.status === 'pendente') {
+                        listaEl.innerHTML += `
+                        <div class="apex-card border-warning p-3 bg-warning bg-opacity-10 shadow-sm border mb-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge bg-warning text-dark"><i class="bi bi-box-seam me-1"></i> Aguardando Retirada</span>
+                            </div>
+                            
+                            <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: white; border: 1px dashed #fbbf24;">
+                                <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%;">
+                                    <small class="text-muted d-block" style="font-size: 0.7rem; text-transform: uppercase;">Código do Pacote</small>
+                                    <strong class="text-dark fs-5" style="font-family: monospace; letter-spacing: 1px;" title="${numeroDoPacote}">${codigoResumido}</strong>
+                                </div>
+                                <button class="btn btn-sm btn-light border shadow-sm text-primary" onclick="copiarTexto('${numeroDoPacote}')" title="Copiar Código">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </div>
+                            
+                            <small class="text-muted fw-bold"><i class="bi bi-calendar-event text-warning"></i> Chegou: ${dataChegada}</small>
+                        </div>`;
+                    } else {
+                        const dataRetirada = new Date(pacote.data_retirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                        listaEl.innerHTML += `
+                        <div class="apex-card border-success p-3 bg-success bg-opacity-10 shadow-sm border mb-3" style="opacity: 0.85;">
+                            <span class="badge bg-success mb-2"><i class="bi bi-check2-all me-1"></i> Retirado</span>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-muted fs-6 text-decoration-line-through" style="font-family: monospace;" title="${numeroDoPacote}">${codigoResumido}</strong>
+                            </div>
+                            <small class="text-muted d-block"><i class="bi bi-calendar-event"></i> Chegou: ${dataChegada}</small>
+                            <small class="text-success fw-bold"><i class="bi bi-check2-circle"></i> Retirado em: ${dataRetirada}</small>
+                        </div>`;
+                    }
+                });
+            } else {
+                listaEl.innerHTML = `
+                <div class="text-center p-5">
+                    <i class="bi bi-inbox text-muted opacity-50" style="font-size: 3rem;"></i>
+                    <h6 class="fw-bold mt-3 text-dark">Nenhum pacote encontrado</h6>
+                </div>`;
+            }
+        }
+
+        // Função utilitária para o botão de copiar funcionar
+        function copiarTexto(texto) {
+            navigator.clipboard.writeText(texto).then(() => {
+                alert("✅ Código copiado: " + texto);
+            }).catch(err => {
+                console.error('Erro ao copiar: ', err);
+            });
+        }
+        async function verificarSessao() {
+            document.body.style.backgroundColor = 'var(--apex-brand)';
+            const { data } = await supabaseClient.auth.getSession();
+            if (data.session) {
+                toggleAppShell(true);
+                navigate('screen-dashboard');
+                carregarPerfil();
+            }
+        }
+
+        // ==========================================
+        // INICIALIZAÇÃO MASTER DO SISTEMA
+        // ==========================================
+        window.onload = async () => { 
+            // Limpo: Sem a função fantasma que travava a página
+            await verificarSessao();
+
+            // Pega o código no segundo em que o app da Gamma Play devolver pro site:
+            const parametrosLink = new URLSearchParams(window.location.search);
+            const codigoDaCamera = parametrosLink.get('codigo');
+            
+            if (codigoDaCamera) {
+                setTimeout(() => {
+                    navigate('screen-scan', document.querySelectorAll('.nav-item')[1]);
+                    processarCodigoLido(codigoDaCamera);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 400); 
+            }
+        };
+
+        // ==========================================
+        // LOGIN (COM MENSAGEM CLARA)
+        // ==========================================
+        async function realizarLogin(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btn-entrar');
+            const alertMsg = document.getElementById('login-alert');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Acessando...'; 
+            btn.disabled = true; alertMsg.style.display = 'none';
+
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: document.getElementById('email').value.trim(),
+                password: document.getElementById('senha').value
+            });
+
+            if (error) {
+                // Tradução do erro genérico do Supabase para algo claro ao usuário
+                let msgErro = "Ocorreu um erro no servidor.";
+                if (error.message.includes('Invalid login credentials')) {
+                    msgErro = "E-mail não cadastrado ou senha incorreta.";
+                } else if (error.message.includes('Email not confirmed')) {
+                    msgErro = "E-mail ainda não confirmado.";
+                }
+                
+                mostrarErro(alertMsg, msgErro);
+                btn.innerHTML = 'Entrar no Sistema'; btn.disabled = false;
+            } else {
+                carregarPerfil();
+                btn.innerHTML = 'Entrar no Sistema'; btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // UX: OLHINHO DA SENHA E NAVEGAÇÃO DE CAIXAS
+        // ==========================================
+        function alternarVisibilidadeSenha(inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                iconElement.classList.replace("bi-eye-slash", "bi-eye");
+                iconElement.classList.add("text-primary");
+            } else {
+                input.type = "password";
+                iconElement.classList.replace("bi-eye", "bi-eye-slash");
+                iconElement.classList.remove("text-primary");
+            }
+        }
+
+        // ==========================================
+        // TRANSIÇÃO DE TELAS BLINDADA
+        // ==========================================
+        function alternarTelaLogin(idTelaAtiva) {
+            // MÁGICA: Em vez de procurar por nomes, ele acha todas as caixas de login e esconde
+            const todasAsCaixas = document.querySelectorAll('.login-card');
+            todasAsCaixas.forEach(caixa => caixa.classList.add('d-none'));
+            
+            // Depois ele mostra apenas a que nós queremos
+            const caixaAtiva = document.getElementById(idTelaAtiva);
+            if (caixaAtiva) caixaAtiva.classList.remove('d-none');
+        }
+
+        // ==========================================
+        // ETAPA 3: SALVAR A NOVA SENHA DEFINITIVA
+        // ==========================================
+        async function salvarNovaSenhaDefinitiva() {
+            const novaSenha = document.getElementById('rec-nova-senha').value;
+            const btn = document.getElementById('btn-salvar-nova-senha');
+            const alertMsg = document.getElementById('nova-senha-alert');
+
+            if(!novaSenha || novaSenha.length < 6) return mostrarErro(alertMsg, "A senha deve ter no mínimo 6 caracteres.");
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...'; 
+            btn.disabled = true; alertMsg.style.display = 'none';
+
+            try {
+                // 1. Atualiza a senha no banco
+                const { error } = await supabaseClient.auth.updateUser({ password: novaSenha });
+                if (error) throw new Error("Erro ao salvar a nova senha.");
+
+                // 2. Desloga a sessão temporária de recuperação para não dar conflito
+                await supabaseClient.auth.signOut();
+
+                alert("✅ Senha alterada com sucesso! Você já pode acessar.");
+                
+                // 3. Preenche os campos do login para facilitar a vida do morador
+                const campoEmailLogin = document.getElementById('email');
+                const campoSenhaLogin = document.getElementById('senha');
+                
+                if (campoEmailLogin) campoEmailLogin.value = emailRecuperacaoMemoria;
+                if (campoSenhaLogin) campoSenhaLogin.value = novaSenha; 
+                
+                // 4. Volta para a tela inicial
+                alternarTelaLogin('box-login-padrao');
+                
+            } catch (err) {
+                mostrarErro(alertMsg, err.message);
+            }
+            
+            if(btn) {
+                btn.innerHTML = 'Salvar Nova Senha'; 
+                btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // UX PREMIUM: CAIXINHAS OTP (CÓDIGO 6 DÍGITOS)
+        // ==========================================
+        function moverFocoOTP(elementoAtual, index) {
+            const inputs = document.querySelectorAll('.otp-input');
+            // Avança para o próximo se digitou
+            if (elementoAtual.value.length === 1 && index < inputs.length) {
+                inputs[index].focus();
+            }
+            // Volta pro anterior se apagou
+            if (elementoAtual.value.length === 0 && index > 1) {
+                if (event.key === "Backspace") inputs[index - 2].focus();
+            }
+        }
+
+        function colarOTP(event) {
+            event.preventDefault();
+            let colado = event.clipboardData.getData("text").replace(/\D/g, ""); // Pega só os números
+            const inputs = document.querySelectorAll('.otp-input');
+            
+            for (let i = 0; i < inputs.length; i++) {
+                if (i < colado.length) {
+                    inputs[i].value = colado[i];
+                }
+            }
+            // Foca na última caixa preenchida
+            let focarEm = Math.min(colado.length, inputs.length) - 1;
+            inputs[focarEm].focus();
+        }
+
+        function pegarCodigoCompletoOTP() {
+            let codigo = "";
+            document.querySelectorAll('.otp-input').forEach(input => codigo += input.value);
+            return codigo;
+        }
+
+        function limparCaixinhasOTP() {
+            document.querySelectorAll('.otp-input').forEach(input => input.value = "");
+        }
+
+        // ==========================================
+        // FLUXO DE RECUPERAÇÃO (3 ETAPAS SEPARADAS)
+        // ==========================================
+        let emailRecuperacaoMemoria = ""; 
+
+        // ETAPA 1: Enviar E-mail
+        // Função que cria as bolinhas no e-mail (Ex: roberto@gmail.com -> r•••••o@g••••l.com)
+        function mascararEmailUX(email) {
+            let partes = email.split('@');
+            let nome = partes[0];
+            let dominio = partes[1].split('.')[0];
+            let extensao = partes[1].split('.')[1];
+            
+            let nomeMasc = nome.length > 2 ? nome[0] + '•'.repeat(nome.length - 2) + nome[nome.length - 1] : nome;
+            let domMasc = dominio.length > 2 ? dominio[0] + '•'.repeat(dominio.length - 2) + dominio[dominio.length - 1] : dominio;
+            
+            return `${nomeMasc}@${domMasc}.${extensao}`;
+        }
+
+        async function enviarCodigoRecuperacao() {
+            const email = document.getElementById('rec-email').value.trim();
+            const btn = document.getElementById('btn-enviar-codigo');
+            const alertMsg = document.getElementById('rec-alert');
+
+            if(!email || !email.includes('@')) return mostrarErro(alertMsg, "Digite um e-mail válido.");
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Solicitando Código...'; 
+            btn.disabled = true; alertMsg.style.display = 'none';
+
+            const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
+
+            if (error) {
+                mostrarErro(alertMsg, "Ocorreu um erro. Verifique sua conexão.");
+                btn.innerHTML = 'Enviar Código'; btn.disabled = false;
+            } else {
+                emailRecuperacaoMemoria = email; 
+                
+                // MÁGICA: Injeta o e-mail mascarado na tela para ficar idêntico ao Google
+                document.getElementById('lbl-email-mascarado').innerText = mascararEmailUX(email);
+                
+                limparCaixinhasOTP();
+                alternarTelaLogin('box-verificar-codigo');
+                
+                // Dá um tempinho e foca no primeiro tracinho
+                setTimeout(() => { document.querySelectorAll('.otp-input')[0].focus(); }, 300);
+                
+                btn.innerHTML = 'Enviar Código'; btn.disabled = false;
+            }
+        }
+
+        // ETAPA 2: Validar o Código OTP digitado nas caixinhas
+        async function validarCodigoOTP() {
+            const codigo = pegarCodigoCompletoOTP();
+            const btn = document.getElementById('btn-verificar-codigo');
+            const alertMsg = document.getElementById('verificar-alert');
+
+            if (codigo.length < 6) return mostrarErro(alertMsg, "Preencha os 6 dígitos.");
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Verificando...'; 
+            btn.disabled = true; alertMsg.style.display = 'none';
+
+            // O Supabase valida o código!
+            const { error } = await supabaseClient.auth.verifyOtp({
+                email: emailRecuperacaoMemoria,
+                token: codigo,
+                type: 'recovery'
+            });
+
+            if (error) {
+                mostrarErro(alertMsg, "Código incorreto ou expirado. Tente novamente.");
+                btn.innerHTML = 'Verificar Código'; btn.disabled = false;
+            } else {
+                // Código Aceito! Agora sim ele pode criar a senha.
+                document.getElementById('rec-nova-senha').value = "";
+                alternarTelaLogin('box-definir-senha');
+                btn.innerHTML = 'Verificar Código'; btn.disabled = false;
+            }
+        }
+
+
+        function mostrarErro(elemento, texto) {
+            elemento.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> ${texto}`;
+            elemento.style.display = 'block';
+        }
+
+        // ==========================================
+        // FLUXO BLINDADO: CRIAR CONTA COM PIN
+        // ==========================================
+        async function validarPinECriarConta() {
+            const pin = document.getElementById('cad-pin').value.replace(/\s/g, '').toUpperCase();
+            const email = document.getElementById('cad-email').value.trim();
+            const senha = document.getElementById('cad-senha').value;
+            const btn = document.getElementById('btn-registrar');
+            const alertMsg = document.getElementById('cad-alert');
+
+            if(!pin || pin.length < 4) return mostrarErro(alertMsg, "Digite o PIN corretamente.");
+            if(!email || !email.includes('@')) return mostrarErro(alertMsg, "Digite um e-mail válido.");
+            if(!senha || senha.length < 6) return mostrarErro(alertMsg, "A senha deve ter no mínimo 6 caracteres.");
+
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Validando...'; btn.disabled = true; alertMsg.style.display = 'none';
+
+            try {
+                // 1. CHAMA O "PORTEIRO CEGO" (RPC) NO SUPABASE COM SEGURANÇA MÁXIMA
+                const { data: aptos, error: errApto } = await supabaseClient
+                    .rpc('validar_pin_morador', { pin_digitado: pin });
+
+                if (errApto || !aptos || aptos.length === 0) {
+                    throw new Error("PIN inválido. Solicite à portaria do seu condomínio.");
+                }
+
+                let idAptoReal = aptos[0].id_apto;
+                let idCondReal = aptos[0].id_cond;
+
+                // 2. CRIA A CONTA
+                const { data: authData, error: errAuth } = await supabaseClient.auth.signUp({
+                    email: email, password: senha
+                });
+
+                if (errAuth) throw errAuth;
+
+                // 3. VINCULA A CONTA AO APARTAMENTO
+                if (authData.user) {
+                    await supabaseClient.from('perfis')
+                        .update({ apartamento_id: idAptoReal, condominio_id: idCondReal, role: 'morador' })
+                        .eq('id', authData.user.id);
+                }
+
+                alert("✅ Conta criada e vinculada com sucesso! Bem-vindo.");
+                
+                await supabaseClient.auth.signInWithPassword({ email: email, password: senha });
+                carregarPerfil();
+
+            } catch (err) {
+                let msgErro = err.message;
+                if(msgErro.includes('already registered')) msgErro = 'Este e-mail já possui uma conta.';
+                mostrarErro(alertMsg, msgErro);
+                btn.innerHTML = 'Criar Conta'; btn.disabled = false;
+            }
+        }
+        // ==========================================
+        // NOVO DESIGN DO PAINEL DO MORADOR (UX CLEAN)
+        // ==========================================
+        let modalPacotesObj = null;
+
+        function abrirModalPacotesMorador(tipo) {
+            const listaEl = document.getElementById('lista-pacotes-detalhados');
+            const tituloModal = document.getElementById('modal-pacotes-titulo');
+            
+            listaEl.innerHTML = '';
+            
+            if(tipo === 'pendente') {
+                tituloModal.innerHTML = '<i class="bi bi-box-seam text-warning me-2"></i> Aguardando Retirada';
+            } else if(tipo === 'entregue') {
+                tituloModal.innerHTML = '<i class="bi bi-check2-circle text-success me-2"></i> Já Retirados';
+            } else {
+                tituloModal.innerHTML = '<i class="bi bi-clock-history text-dark me-2"></i> Histórico Completo';
+            }
+
+            // Filtra os pacotes da memória
+            let pacotesFiltrados = pacotesMoradorLocal;
+            if(tipo !== 'todos') {
+                pacotesFiltrados = pacotesMoradorLocal.filter(p => p.status === tipo);
+            }
+
+            if(pacotesFiltrados.length > 0) {
+                pacotesFiltrados.forEach(pacote => {
+                    const dataChegada = new Date(pacote.data_recebimento).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                    
+                    let numeroDoPacote = pacote.codigo_barras || 'S/N';
+
+                    // LÓGICA DE UX PARA CÓDIGOS GIGANTES: Corta o meio e coloca "..."
+                    let codigoResumido = numeroDoPacote.length > 25 ? numeroDoPacote.substring(0, 12) + '...' + numeroDoPacote.substring(numeroDoPacote.length - 6) : numeroDoPacote;
+
+                    if(pacote.status === 'pendente') {
+                        listaEl.innerHTML += `
+                        <div class="apex-card border-warning p-3 bg-warning bg-opacity-10 shadow-sm border mb-3">
+                            <span class="badge bg-warning text-dark mb-2"><i class="bi bi-box-seam me-1"></i> Na Portaria</span>
+                            
+                            <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: white; border: 1px dashed #fbbf24;">
+                                <div style="overflow: hidden;">
+                                    <small class="text-muted d-block" style="font-size: 0.7rem; text-transform: uppercase;">Código do Pacote</small>
+                                    <strong class="text-dark fs-6" style="font-family: monospace; letter-spacing: 1px; word-break: break-all;" title="${numeroDoPacote}">${codigoResumido}</strong>
+                                </div>
+                                <button class="btn btn-sm btn-light border shadow-sm text-primary ms-2" onclick="copiarTexto('${numeroDoPacote}')" title="Copiar Código" style="min-width: 40px;">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </div>
+
+                            <small class="text-muted"><i class="bi bi-calendar-event text-warning"></i> Chegou: ${dataChegada}</small>
+                        </div>`;
+                    } else {
+                        const dataRetirada = new Date(pacote.data_retirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                        listaEl.innerHTML += `
+                        <div class="apex-card border-success p-3 bg-success bg-opacity-10 shadow-sm border mb-3" style="opacity: 0.85;">
+                            <span class="badge bg-success mb-2"><i class="bi bi-check2-all me-1"></i> Retirado</span>
+                            
+                            <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: white; border: 1px dashed #10b981;">
+                                <div style="overflow: hidden;">
+                                    <strong class="text-muted fs-6 text-decoration-line-through" style="font-family: monospace; word-break: break-all;" title="${numeroDoPacote}">${codigoResumido}</strong>
+                                </div>
+                                 <button class="btn btn-sm btn-light border shadow-sm text-success ms-2" onclick="copiarTexto('${numeroDoPacote}')" title="Copiar Código" style="min-width: 40px;">
+                                    <i class="bi bi-copy"></i>
+                                </button>
+                            </div>
+
+                            <small class="text-muted d-block"><i class="bi bi-calendar-event"></i> Chegou: ${dataChegada}</small>
+                            <small class="text-success fw-bold"><i class="bi bi-check2-circle"></i> Retirado em: ${dataRetirada}</small>
+                        </div>`;
+                    }
+                });
+            } else {
+                listaEl.innerHTML = `
+                <div class="text-center p-5">
+                    <i class="bi bi-inbox text-muted opacity-50" style="font-size: 3rem;"></i>
+                    <h6 class="fw-bold mt-3 text-dark">Nenhum pacote encontrado</h6>
+                </div>`;
+            }
+
+            if (!modalPacotesObj) modalPacotesObj = new bootstrap.Modal(document.getElementById('modal-pacotes-morador'));
+            modalPacotesObj.show();
+        }
+
+        async function logout() {
+            await supabaseClient.auth.signOut();
+            toggleAppShell(false);
+            navigate('screen-login');
+        }
+
+        // ==========================================
+        // FLUXO DO MORADOR: VINCULAR PIN (ATUALIZADO)
+        // ==========================================
+        async function vincularApartamento() {
+            const pinDigitado = document.getElementById('input-pin-morador').value.trim();
+            if(!pinDigitado) return alert("Digite o PIN.");
+
+            const btn = document.getElementById('btn-vincular-pin');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>...';
+            btn.disabled = true;
+
+            // 1. Procura qual apartamento (e de qual condomínio) tem esse PIN
+            const { data: aptos, error: errApto } = await supabaseClient
+                .from('apartamentos')
+                .select('id, condominio_id')
+                .eq('pin_acesso', pinDigitado);
+
+            if(errApto || aptos.length === 0) {
+                alert("PIN inválido. Verifique com a portaria.");
+                btn.innerHTML = 'Acessar Meu Painel'; btn.disabled = false;
+                return;
+            }
+
+            const novoAptoId = aptos[0].id;
+            const condId = aptos[0].condominio_id;
+
+            // 2. Vincula o morador ao apartamento E ao condomínio ao mesmo tempo!
+            const { error: errUpdate } = await supabaseClient
+                .from('perfis')
+                .update({ apartamento_id: novoAptoId, condominio_id: condId })
+                .eq('id', meuPerfilId);
+
+            if(!errUpdate) {
+                meuCondominioId = condId; // Atualiza na memória
+                document.getElementById('morador-sem-vinculo').classList.add('d-none');
+                document.getElementById('morador-com-vinculo').classList.remove('d-none');
+                carregarPacotesMorador(novoAptoId);
+            } else {
+                alert("Erro ao vincular. Tente novamente.");
+            }
+            
+            btn.innerHTML = 'Acessar Meu Painel'; btn.disabled = false;
+        }
+
+        // ==========================================
+        // LÓGICA DOS BOTÕES (BLOCOS E APTOS DINÂMICOS)
+        // ==========================================
+        let blocoSelecionado = '';
+        let aptoSelecionado = '';
+
+        // Agora ele usa a mesma memória que a tela de PINs carrega do banco de dados
+        function renderizarBlocos() {
+            const grid = document.getElementById('grid-blocos');
+            grid.innerHTML = '';
+
+            // Se a memória ainda não carregou do banco, exibe mensagem
+            if (Object.keys(aptosAgrupadosPin).length === 0) {
+                grid.innerHTML = '<span class="text-muted small">Carregando blocos...</span>';
+                return;
+            }
+
+            // Ordena inteligente (número com número, texto com texto)
+            const blocosOrdenados = Object.keys(aptosAgrupadosPin).sort((a, b) => {
+                let n1 = parseInt(a); let n2 = parseInt(b);
+                return (isNaN(n1) || isNaN(n2)) ? a.localeCompare(b) : n1 - n2;
+            });
+
+            blocosOrdenados.forEach(bloco => {
+                grid.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarBloco('${bloco}', this)">${bloco}</div>`;
+            });
+        }
+
+        function renderizarAptos(bloco) {
+            const grid = document.getElementById('grid-aptos');
+            grid.innerHTML = '';
+
+            if (!aptosAgrupadosPin[bloco]) return;
+
+            // Ordena inteligente
+            const aptosOrdenados = aptosAgrupadosPin[bloco].sort((a, b) => {
+                let n1 = parseInt(a.numero); let n2 = parseInt(b.numero);
+                return (isNaN(n1) || isNaN(n2)) ? a.numero.localeCompare(b.numero) : n1 - n2;
+            });
+
+            aptosOrdenados.forEach(apto => {
+                grid.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarApto('${apto.numero}', this)">${apto.numero}</div>`;
+            });
+        }
+
+        function selecionarBloco(bloco, elemento) {
+            blocoSelecionado = bloco;
+            aptoSelecionado = ''; 
+            
+            // Visual: marca o bloco ativo
+            document.querySelectorAll('#grid-blocos .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            // Mostra a grade de apartamentos
+            document.getElementById('lbl-bloco-selecionado').innerText = bloco;
+            
+            // GARANTE QUE A CAIXA ONDE OS BOTÕES NASCEM VAI APARECER NA TELA
+            document.getElementById('container-aptos').classList.remove('d-none');
+            document.getElementById('grid-aptos').classList.remove('d-none');
+            
+            // Esconde botão de salvar até escolher apto
+            document.getElementById('btn-salvar-pacote').classList.add('d-none');
+            
+            renderizarAptos(bloco);
+        }
+
+        function selecionarApto(apto, elemento) {
+            aptoSelecionado = apto;
+            
+            // Visual: marca o apto ativo
+            document.querySelectorAll('#grid-aptos .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            // Mostra o botão de salvar
+            document.getElementById('btn-salvar-pacote').classList.remove('d-none');
+        }
+
+        function resetarSelecao() {
+            blocoSelecionado = ''; aptoSelecionado = '';
+            document.getElementById('container-aptos').classList.add('d-none');
+            document.getElementById('btn-salvar-pacote').classList.add('d-none');
+            renderizarBlocos();
+        }
+
+        // Renderiza os blocos assim que a tela abre
+        setTimeout(renderizarBlocos, 500);
+
+        // ==========================================
+        // BANCO DE DADOS: SALVAR ENCOMENDA
+        // ==========================================
+        async function salvarEncomenda() {
+            const bloco = blocoSelecionado;
+            const apto = aptoSelecionado;
+            
+            if(pacotesLidos.length === 0) return alert("Escaneie ou digite um pacote primeiro!");
+            if(!bloco || !apto) return alert("Informe o Bloco e o Apartamento!");
+
+            const btn = document.getElementById('btn-salvar-pacote');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando...';
+            btn.disabled = true;
+
+            const inserts = pacotesLidos.map(codigo => ({
+                condominio_id: meuCondominioId,
+                bloco: bloco,
+                apto: apto,
+                codigo_barras: codigo, // <--- O NOME EXATO DO SEU BANCO!
+                status: 'pendente',
+                porteiro_recebeu_id: meuPerfilId
+            }));
+
+            const { error } = await supabaseClient.from('encomendas').insert(inserts);
+
+            if (error) {
+                console.error("Erro do banco:", error);
+                alert("Erro ao salvar: " + error.message);
+            } else {
+                pacotesLidos = [];
+                document.getElementById('count-scan').innerText = '0';
+                document.getElementById('lista-codigos').value = '';
+                resetarSelecao();
+                navigate('screen-pendentes', document.querySelectorAll('.nav-item')[2]);
+            }
+
+            btn.innerHTML = '<i class="bi bi-check2-circle"></i> Salvar e Guardar';
+            btn.disabled = false;
+        }
+
+        // ==========================================
+        // BANCO DE DADOS: CARREGAR DADOS NA TELA
+        // ==========================================
+        let todosPendentes = [];
+        let pendentesPorBloco = {};
+        let historicoPortariaLocal = []; // Usado para a pesquisa de auditoria
+
+        async function carregarDados() {
+            if(!meuCondominioId) return;
+
+            const { data: encomendas, error } = await supabaseClient
+                .from('encomendas')
+                .select('*')
+                .eq('condominio_id', meuCondominioId)
+                .order('data_recebimento', { ascending: false });
+
+            if(error) { console.error(error); return; }
+
+            todosPendentes = encomendas.filter(e => e.status === 'pendente');
+            const entregues = encomendas.filter(e => e.status === 'entregue');
+            historicoPortariaLocal = encomendas; // Salva para a lupa do auditor
+
+            document.getElementById('dash-pendentes').innerText = todosPendentes.length;
+            document.getElementById('dash-entregues').innerText = entregues.length;
+
+            pendentesPorBloco = {};
+            todosPendentes.forEach(p => {
+                if(!pendentesPorBloco[p.bloco]) pendentesPorBloco[p.bloco] = {};
+                if(!pendentesPorBloco[p.bloco][p.apto]) pendentesPorBloco[p.bloco][p.apto] = [];
+                pendentesPorBloco[p.bloco][p.apto].push(p);
+            });
+
+            renderizarBlocosPendentes();
+            
+            // CORREÇÃO DO DELAY: Garante que a tela de SCAN também carregue os botões de blocos imediatamente!
+            if(Object.keys(aptosAgrupadosPin).length === 0) {
+                // Se os aptos ainda não carregaram, força o carregamento para alimentar os botões do Scanner
+                carregarAptos(); 
+            }
+        }
+
+        function renderizarBlocosPendentes() {
+            const grid = document.getElementById('grid-blocos-pendentes');
+            document.getElementById('container-aptos-pendentes').classList.add('d-none');
+            document.getElementById('area-entrega-pendente').classList.add('d-none');
+            grid.innerHTML = '';
+
+            const blocosComPacotes = Object.keys(pendentesPorBloco).sort((a, b) => {
+                let n1 = parseInt(a); let n2 = parseInt(b); return (isNaN(n1) || isNaN(n2)) ? a.localeCompare(b) : n1 - n2;
+            });
+
+            if(blocosComPacotes.length === 0) {
+                grid.innerHTML = '<span class="text-muted small p-2">Nenhuma encomenda aguardando retirada.</span>';
+                return;
+            }
+            blocosComPacotes.forEach(bloco => { grid.innerHTML += `<div class="btn-selecao border-success text-success" onclick="selecionarBlocoPendente('${bloco}', this)">${bloco}</div>`; });
+        }
+
+        async function carregarPacotesBanco() {
+            const { data: encomendas, error } = await supabaseClient
+                .from('encomendas')
+                .select('*')
+                .eq('condominio_id', meuCondominioId)
+                .order('data_recebimento', { ascending: false });
+
+            if(error) { console.error(error); return; }
+
+            todosPendentes = encomendas.filter(e => e.status === 'pendente');
+            const entregues = encomendas.filter(e => e.status === 'entregue');
+            historicoPortariaLocal = encomendas; // Salva para a aba Histórico da portaria
+
+            // Atualiza Dashboard
+            document.getElementById('dash-pendentes').innerText = todosPendentes.length;
+            document.getElementById('dash-entregues').innerText = entregues.length;
+
+            // Agrupa pendentes por bloco para desenhar os botões
+            pendentesPorBloco = {};
+            todosPendentes.forEach(p => {
+                if(!pendentesPorBloco[p.bloco]) pendentesPorBloco[p.bloco] = {};
+                if(!pendentesPorBloco[p.bloco][p.apto]) pendentesPorBloco[p.bloco][p.apto] = [];
+                pendentesPorBloco[p.bloco][p.apto].push(p);
+            });
+
+            renderizarBlocosPendentes();
+        }
+
+        async function carregarAptosSilencioso() {
+            const { data: aptos } = await supabaseClient
+                .from('apartamentos').select('*').eq('condominio_id', meuCondominioId);
+            
+            if(aptos && aptos.length > 0) {
+                todosAptosMemoria = aptos;
+                aptosAgrupadosPin = {};
+                aptos.forEach(ap => {
+                    if(!aptosAgrupadosPin[ap.bloco]) aptosAgrupadosPin[ap.bloco] = [];
+                    aptosAgrupadosPin[ap.bloco].push(ap);
+                });
+                
+                // Força o desenho imediato dos botões de blocos na aba Scanner e na aba PIN
+                renderizarBlocos(); 
+                
+                // Se o porteiro já estiver com a aba Scanner aberta no celular, forçamos o HTML a reconhecer a atualização
+                const gridScan = document.getElementById('grid-blocos');
+                if (gridScan && gridScan.innerHTML.includes('Carregando')) {
+                    renderizarBlocos();
+                }
+            }
+        }
+
+
+        function selecionarBlocoPendente(bloco, elemento) {
+            document.querySelectorAll('#grid-blocos-pendentes .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            document.getElementById('lbl-bloco-pendente').innerText = bloco;
+            document.getElementById('container-aptos-pendentes').classList.remove('d-none');
+            document.getElementById('area-entrega-pendente').classList.add('d-none'); // Esconde o botão de entregar até escolher o apto
+
+            const gridAptos = document.getElementById('grid-aptos-pendentes');
+            gridAptos.innerHTML = '';
+
+            const aptosComPacotes = Object.keys(pendentesPorBloco[bloco]).sort();
+
+            aptosComPacotes.forEach(apto => {
+                const qtd = pendentesPorBloco[bloco][apto].length;
+                gridAptos.innerHTML += `
+                <div class="btn-selecao border-success text-success position-relative" onclick="selecionarAptoPendente('${bloco}', '${apto}', this)">
+                    ${apto}
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.6rem;">${qtd}</span>
+                </div>`;
+            });
+        }
+
+        function selecionarAptoPendente(bloco, apto, elemento) {
+            document.querySelectorAll('#grid-aptos-pendentes .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            document.getElementById('area-entrega-pendente').classList.remove('d-none');
+            const qtdPacotes = pendentesPorBloco[bloco][apto].length;
+
+            const listaEl = document.getElementById('lista-pendentes');
+            listaEl.innerHTML = `
+                <li class="list-group-item d-flex flex-column gap-3 p-3 mb-2 rounded-3 border border-primary bg-primary bg-opacity-10">
+                    <div>
+                        <strong class="d-block text-dark">Bloco ${bloco} - Apto ${apto}</strong>
+                        <small class="text-muted"><i class="bi bi-box-seam"></i> ${qtdPacotes} pacote(s) aguardando</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger py-2 px-3 fw-bold shadow-sm w-50" style="border-radius: 8px;" onclick="cancelarPacote('${bloco}', '${apto}')">
+                            <i class="bi bi-x-circle"></i> Cancelar/Erro
+                        </button>
+                        <button class="btn btn-apex py-2 px-3 fw-bold shadow-sm w-50" style="border-radius: 8px;" onclick="abrirAssinatura('${bloco}', '${apto}')">
+                            <i class="bi bi-pen"></i> Assinar/Entregar
+                        </button>
+                    </div>
+                </li>`;
+        }
+
+        async function cancelarPacote(bloco, apto) {
+            if(!confirm(`Atenção: Tem certeza que deseja CANCELAR todos os pacotes marcados para o Bloco ${bloco} - Apto ${apto}? O status mudará para "Devolvida/Erro".`)) return;
+            
+            const { error } = await supabaseClient.from('encomendas').update({ status: 'devolvida', data_retirada: new Date().toISOString() })
+                .eq('condominio_id', meuCondominioId).eq('bloco', bloco).eq('apto', apto).eq('status', 'pendente');
+                
+            if(error) alert("Erro ao cancelar: " + error.message);
+            else carregarDados(); // Recarrega e remove os botões
+        }
+
+        // ==========================================
+        // CÂMERA, DIGITAÇÃO E BLINDAGEM DE DUPLICIDADE
+        // ==========================================
+        
+        // Função unificada que processa o código (vindo da câmera ou digitado)
+        async function processarCodigoLido(codigo) {
+            codigo = codigo.trim().toUpperCase();
+            if(!codigo) return;
+
+            // 1. Verifica se já está na lista local (nesta mesma leitura)
+            if(pacotesLidos.includes(codigo)) {
+                alert(`Atenção: O pacote ${codigo} já está na sua lista atual!`);
+                return;
+            }
+
+            // 2. Verifica se JÁ ESTÁ NO BANCO como pendente no condomínio!
+            const { data: pacoteBanco } = await supabaseClient.from('encomendas')
+                .select('id, bloco, apto')
+                .eq('codigo_barras', codigo)
+                .eq('condominio_id', meuCondominioId)
+                .eq('status', 'pendente');
+
+            if(pacoteBanco && pacoteBanco.length > 0) {
+                alert(`DUPLICIDADE! O pacote ${codigo} já foi registrado e está na portaria aguardando o Bloco ${pacoteBanco[0].bloco} - Apto ${pacoteBanco[0].apto}.`);
+                return;
+            }
+
+            // Se passou em todos os testes, adiciona na lista!
+            pacotesLidos.push(codigo);
+            document.getElementById('count-scan').innerText = pacotesLidos.length;
+            document.getElementById('lista-codigos').value = pacotesLidos.join('\n');
+            
+            // Se a câmera estiver aberta, mostra o Toast verde
+            const toast = document.getElementById('camera-toast');
+            if(toast) {
+                toast.innerText = `Lido! (${pacotesLidos.length} pacote(s))`;
+                toast.style.display = 'block';
+                setTimeout(() => { toast.style.display = 'none'; }, 2000);
+            }
+        }
+
+        // Se o porteiro digitar na mão e clicar no botão
+        function adicionarPacoteManual() {
+            const inputEl = document.getElementById('input-codigo-manual');
+            processarCodigoLido(inputEl.value);
+            inputEl.value = ''; // Limpa pra digitar o próximo
+        }
+
+       function ligarCameraFullscreen() {
+            let divFullscreen = document.getElementById('camera-fullscreen-master');
+            
+            if (!divFullscreen) {
+                divFullscreen = document.createElement('div');
+                divFullscreen.id = 'camera-fullscreen-master';
+                divFullscreen.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:999999; display:flex; flex-direction:column;';
+                
+                divFullscreen.innerHTML = `
+                    <div style="flex-grow: 1; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+                        <div id="reader-fullscreen" style="width: 100%; height: 100%; border: none;"></div>
+                    </div>
+                    <div style="background: #111; padding: 20px; padding-bottom: 40px; box-shadow: 0 -10px 20px rgba(0,0,0,0.5); z-index: 2;">
+                        <button class="btn btn-danger w-100 fw-bold py-3 fs-5" onclick="desligarCameraFullscreen()">
+                            <i class="bi bi-x-lg me-2"></i> Fechar Câmera
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(divFullscreen);
+            }
+            
+            divFullscreen.classList.remove('d-none');
+            divFullscreen.style.display = 'flex';
+
+            setTimeout(() => {
+                try {
+                    html5QrcodeScanner = new Html5Qrcode("reader-fullscreen");
+                    
+                    const config = {
+                        fps: 20, // Aumentei um pouco o FPS pra ficar mais liso
+                        qrbox: { width: 250, height: 250 },
+                        formatsToSupport: [ Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.QR_CODE, Html5QrcodeSupportedFormats.EAN_13 ]
+                    };
+
+                    html5QrcodeScanner.start(
+                        { facingMode: "environment" },
+                        config,
+                        async (decodedText) => {
+                            // O QUADRADO FICOU VERDE!
+                            
+                            // 1. TOCA O BIP NA MESMA HORA (Bem alto e agudo)
+                            try {
+                                let ctx = new (window.AudioContext || window.webkitAudioContext)();
+                                let osc = ctx.createOscillator(); osc.connect(ctx.destination);
+                                osc.frequency.value = 1000; // Tom mais agudo e fácil de ouvir
+                                osc.start(); setTimeout(() => osc.stop(), 100); // Som rápido de 0.1s
+                            } catch(e) {}
+
+                            // 2. Trava a câmera temporariamente
+                            html5QrcodeScanner.pause(true); 
+                            
+                            // 3. Processa no banco
+                            await processarCodigoLido(decodedText); 
+                            
+                            // 4. MODO TURBO: Libera a câmera de novo em menos de meio segundo!
+                            setTimeout(() => { html5QrcodeScanner.resume(); }, 400); 
+                        },
+                        (errorMessage) => { }
+                    ).catch(err => {
+                        alert("Permita o uso da câmera quando o celular perguntar!");
+                        desligarCameraFullscreen();
+                    });
+                } catch(e) {
+                    alert("Erro no motor de vídeo: " + e.message);
+                    desligarCameraFullscreen();
+                }
+            }, 300);
+        }
+
+        function desligarCameraFullscreen() {
+            let divCam = document.getElementById('camera-fullscreen-master');
+            if (divCam) {
+                divCam.classList.add('d-none');
+                divCam.style.display = 'none';
+            }
+            if (typeof html5QrcodeScanner !== 'undefined' && html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); }).catch(e => {});
+            }
+        }
+        // ==========================================
+        // ASSINATURA E BAIXA DOS PACOTES
+        // ==========================================
+        let canvas = document.getElementById('signature-pad');
+        let ctx = canvas.getContext('2d');
+        let isDrawing = false;
+        let blocoAtual = '';
+        let aptoAtual = '';
+
+        // Ajusta o tamanho real do canvas para evitar distorção no desenho
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+
+        // Lógica de Desenho (Mouse e Touch)
+        function iniciarDesenho(e) {
+            isDrawing = true;
+            ctx.beginPath();
+            let rect = canvas.getBoundingClientRect();
+            let x = e.clientX ? e.clientX - rect.left : e.touches[0].clientX - rect.left;
+            let y = e.clientY ? e.clientY - rect.top : e.touches[0].clientY - rect.top;
+            ctx.moveTo(x, y);
+        }
+
+        function desenhar(e) {
+            if (!isDrawing) return;
+            e.preventDefault(); // Impede a tela do celular de rolar enquanto assina
+            let rect = canvas.getBoundingClientRect();
+            let x = e.clientX ? e.clientX - rect.left : e.touches[0].clientX - rect.left;
+            let y = e.clientY ? e.clientY - rect.top : e.touches[0].clientY - rect.top;
+            
+            ctx.lineTo(x, y);
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = '#0f172a';
+            ctx.stroke();
+        }
+
+        function pararDesenho() { isDrawing = false; }
+
+        canvas.addEventListener('mousedown', iniciarDesenho);
+        canvas.addEventListener('mousemove', desenhar);
+        canvas.addEventListener('mouseup', pararDesenho);
+        canvas.addEventListener('touchstart', iniciarDesenho);
+        canvas.addEventListener('touchmove', desenhar);
+        canvas.addEventListener('touchend', pararDesenho);
+
+        // Controles do Modal
+        function abrirAssinatura(bloco, apto) {
+            blocoAtual = bloco;
+            aptoAtual = apto;
+            document.getElementById('assinatura-desc').innerText = `Bloco ${bloco} - Apto ${apto}`;
+            document.getElementById('modal-assinatura').classList.add('active');
+            setTimeout(resizeCanvas, 100); // Aguarda o modal abrir para definir o tamanho
+        }
+
+        function fecharAssinatura() {
+            document.getElementById('modal-assinatura').classList.remove('active');
+            limparAssinatura();
+        }
+
+        function limparAssinatura() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Finaliza e manda para o Supabase
+        async function confirmarEntrega() {
+            // VERIFICAÇÃO DE ASSINATURA EM BRANCO (Padrão Ouro de Auditoria)
+            // Se o canvas estiver intocado, o morador não assinou.
+            let ctxData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let temAssinatura = false;
+            // Varre o quadro procurando qualquer pixel desenhado (que não seja transparente/fundo)
+            for (let i = 0; i < ctxData.length; i += 4) {
+                if (ctxData[i + 3] !== 0) { // Canal Alpha (transparência)
+                    temAssinatura = true;
+                    break;
+                }
+            }
+
+            if (!temAssinatura) {
+                return alert("A assinatura é obrigatória! Peça ao morador para assinar na tela antes de concluir a entrega.");
+            }
+
+            const btn = document.getElementById('btn-confirmar-entrega');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>...';
+            btn.disabled = true;
+
+            // Pega o desenho em formato Base64 (Texto gigante que representa a imagem)
+            let assinaturaImagem = canvas.toDataURL('image/png');
+
+            // Atualiza TODOS os pacotes 'pendentes' deste Bloco/Apto para 'entregue'
+            const { error } = await supabaseClient
+                .from('encomendas')
+                .update({ 
+                    status: 'entregue', 
+                    data_retirada: new Date().toISOString(),
+                    assinatura_url: assinaturaImagem,
+                    porteiro_entregou_id: meuPerfilId
+                })
+                .eq('condominio_id', meuCondominioId)
+                .eq('bloco', blocoAtual)
+                .eq('apto', aptoAtual)
+                .eq('status', 'pendente');
+
+            if (error) {
+                console.error(error);
+                alert("Erro ao confirmar entrega.");
+            } else {
+                // Sucesso
+                fecharAssinatura();
+                carregarDados(); // Recarrega os números e a lista
+            }
+
+            btn.innerHTML = 'Concluir Entrega';
+            btn.disabled = false;
+        }
+
+        // ==========================================
+        // GESTÃO DE APARTAMENTOS E PINs (COM BOTÕES)
+        // ==========================================
+        let todosAptosMemoria = [];
+        let aptosAgrupadosPin = {};
+
+        async function carregarAptos() {
+            if(!meuCondominioId) return;
+
+            const gridBlocos = document.getElementById('grid-blocos-pins');
+            document.getElementById('container-aptos-pins').classList.add('d-none');
+            document.getElementById('area-resultado-pin').classList.add('d-none');
+            gridBlocos.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+
+            const { data: aptos, error } = await supabaseClient
+                .from('apartamentos').select('*').eq('condominio_id', meuCondominioId);
+
+            if(error || !aptos || aptos.length === 0) {
+                gridBlocos.innerHTML = '<span class="text-muted small">Nenhum apartamento cadastrado.</span>';
+                return;
+            }
+
+            todosAptosMemoria = aptos;
+            aptosAgrupadosPin = {};
+
+            aptos.forEach(ap => {
+                if(!aptosAgrupadosPin[ap.bloco]) aptosAgrupadosPin[ap.bloco] = [];
+                aptosAgrupadosPin[ap.bloco].push(ap);
+            });
+
+            gridBlocos.innerHTML = '';
+            // Ordenação Inteligente (Mistura de Letras e Números)
+            const blocosOrdenados = Object.keys(aptosAgrupadosPin).sort((a, b) => {
+                let n1 = parseInt(a); let n2 = parseInt(b);
+                return (isNaN(n1) || isNaN(n2)) ? a.localeCompare(b) : n1 - n2;
+            });
+
+            blocosOrdenados.forEach(b => {
+                gridBlocos.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarBlocoPin('${b}', this)">${b}</div>`;
+            });
+            
+            // Força a tela de Scanner a renderizar os blocos agora que eles carregaram do banco
+            renderizarBlocos();
+        }
+
+        function selecionarBlocoPin(bloco, elemento) {
+            document.querySelectorAll('#grid-blocos-pins .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            document.getElementById('lbl-bloco-pin').innerText = bloco;
+            document.getElementById('container-aptos-pins').classList.remove('d-none');
+            document.getElementById('area-resultado-pin').classList.add('d-none');
+
+            const gridAptos = document.getElementById('grid-aptos-pins');
+            gridAptos.innerHTML = '';
+
+            const aptosDesteBloco = aptosAgrupadosPin[bloco].sort((a, b) => parseInt(a.numero) - parseInt(b.numero));
+
+            aptosDesteBloco.forEach(ap => {
+                gridAptos.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="exibirPinApto('${ap.id}', this)">${ap.numero}</div>`;
+            });
+        }
+
+        function exibirPinApto(idApto, elemento) {
+            document.querySelectorAll('#grid-aptos-pins .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            const ap = todosAptosMemoria.find(a => a.id === idApto);
+            
+            document.getElementById('area-resultado-pin').classList.remove('d-none');
+            document.getElementById('lista-aptos').innerHTML = `
+                <li class="list-group-item d-flex justify-content-between align-items-center p-3 mb-2 rounded-3 border border-dark bg-dark bg-opacity-10">
+                    <div>
+                        <strong class="d-block text-dark">Bloco ${ap.bloco} - Apto ${ap.numero}</strong>
+                        <div class="d-flex align-items-center mt-1">
+                            <span class="badge bg-white text-dark border border-dark fs-5 fw-bold me-2 px-3 py-2 letter-spacing-1 shadow-sm">${ap.pin_acesso}</span>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger fw-bold shadow-sm" onclick="resetarPin('${ap.id}', '${ap.bloco}', '${ap.numero}')">
+                        <i class="bi bi-arrow-repeat"></i> Resetar
+                    </button>
+                </li>`;
+        }
+
+        async function resetarPin(id, bloco, numero) {
+            if(!confirm(`Tem certeza que deseja resetar o PIN do Bloco ${bloco} - Apto ${numero}?\nO antigo morador perderá o acesso às novas encomendas.`)) return;
+
+            const { data: moradoresAntigos } = await supabaseClient.from('perfis').select('id').eq('apartamento_id', id);
+            
+            if(moradoresAntigos && moradoresAntigos.length > 0) {
+                for(let m of moradoresAntigos) {
+                    await supabaseClient.from('encomendas')
+                        .update({ morador_historico_id: m.id })
+                        .eq('bloco', bloco).eq('apto', numero).eq('status', 'entregue').is('morador_historico_id', null);
+                }
+            }
+
+            const novoPin = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const { error } = await supabaseClient.from('apartamentos').update({ pin_acesso: novoPin }).eq('id', id);
+
+            if(!error) {
+                await supabaseClient.from('perfis').update({ apartamento_id: null }).eq('apartamento_id', id);
+                alert("PIN resetado com sucesso!");
+                carregarAptos(); // Recarrega os dados silenciosamente para atualizar o PIN na memória
+            } else { alert("Erro ao resetar PIN."); }
+        }
+
+        // ==========================================
+        // AUDITORIA E HISTÓRICO DA PORTARIA (COM BOTÕES)
+        // ==========================================
+        function carregarHistoricoPortaria() {
+            // Essa função reutiliza a lista de apartamentos "aptosAgrupadosPin" 
+            // que já foi carregada do banco na aba de Aptos.
+            
+            const gridBlocos = document.getElementById('grid-blocos-historico');
+            document.getElementById('container-aptos-historico').classList.add('d-none');
+            document.getElementById('area-resultado-historico').classList.add('d-none');
+            
+            if(Object.keys(aptosAgrupadosPin).length === 0) {
+                gridBlocos.innerHTML = '<span class="text-muted small">Nenhum dado encontrado.</span>';
+                return;
+            }
+
+            gridBlocos.innerHTML = '';
+            const blocosOrdenados = Object.keys(aptosAgrupadosPin).sort((a, b) => {
+                let n1 = parseInt(a); let n2 = parseInt(b); return (isNaN(n1) || isNaN(n2)) ? a.localeCompare(b) : n1 - n2;
+            });
+
+            blocosOrdenados.forEach(b => {
+                gridBlocos.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarBlocoHistorico('${b}', this)">${b}</div>`;
+            });
+        }
+
+        function selecionarBlocoHistorico(bloco, elemento) {
+            document.querySelectorAll('#grid-blocos-historico .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            document.getElementById('lbl-bloco-historico').innerText = bloco;
+            document.getElementById('container-aptos-historico').classList.remove('d-none');
+            document.getElementById('area-resultado-historico').classList.add('d-none');
+
+            const gridAptos = document.getElementById('grid-aptos-historico');
+            gridAptos.innerHTML = '';
+
+            const aptosDesteBloco = aptosAgrupadosPin[bloco].sort((a, b) => {
+                let n1 = parseInt(a.numero); let n2 = parseInt(b.numero); return (isNaN(n1) || isNaN(n2)) ? a.numero.localeCompare(b.numero) : n1 - n2;
+            });
+
+            aptosDesteBloco.forEach(ap => {
+                gridAptos.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="exibirPacotesHistorico('${ap.bloco}', '${ap.numero}', this)">${ap.numero}</div>`;
+            });
+        }
+
+        function exibirPacotesHistorico(bloco, apto, elemento) {
+            document.querySelectorAll('#grid-aptos-historico .btn-selecao').forEach(el => el.classList.remove('active'));
+            elemento.classList.add('active');
+
+            document.getElementById('area-resultado-historico').classList.remove('d-none');
+            
+            // Filtra o histórico para mostrar APENAS pacotes deste Bloco/Apto
+            const filtrados = historicoPortariaLocal.filter(p => p.bloco === bloco && p.apto === apto);
+            renderizarListaHistorico(filtrados, bloco, apto);
+        }
+
+        function renderizarListaHistorico(lista, bloco, apto) {
+            const container = document.getElementById('lista-historico-portaria');
+            container.innerHTML = '';
+
+            if(lista.length === 0) {
+                container.innerHTML = `<div class="text-center p-4 border rounded-4 bg-white shadow-sm text-muted">Nenhum pacote encontrado para o Bloco ${bloco} - Apto ${apto}.</div>`;
+                return;
+            }
+
+            lista.forEach(p => {
+                let dataChegada = new Date(p.data_recebimento).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                let iconeStatus = p.status === 'pendente' ? '<span class="badge bg-warning text-dark">Pendente</span>' : p.status === 'devolvida' ? '<span class="badge bg-danger">Cancelada/Erro</span>' : '<span class="badge bg-success">Entregue</span>';
+                
+                let linhaAssinatura = p.assinatura_url ? `<div class="mt-3 pt-3 border-top"><small class="text-muted d-block mb-2">Comprovante de Retirada:</small><img src="${p.assinatura_url}" style="max-height: 80px; max-width: 100%; background: white; border: 1px solid #cbd5e1; border-radius: 8px;"></div>` : '';
+
+                container.innerHTML += `
+                <div class="apex-card p-4 shadow-sm border-0" style="background: #f8fafc;">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong class="text-dark fs-5">Bl ${p.bloco} - Ap ${p.apto}</strong>
+                        ${iconeStatus}
+                    </div>
+                    <code class="d-block text-dark mb-3 fw-bold fs-6">${p.codigo_barras || 'S/N'}</code>
+                    <small class="text-muted d-block mb-1"><i class="bi bi-box-arrow-in-right"></i> Chegou: ${dataChegada}</small>
+                    ${p.data_retirada ? `<small class="text-muted d-block fw-bold"><i class="bi bi-check2-all text-success"></i> Baixado em: ${new Date(p.data_retirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</small>` : ''}
+                    ${linhaAssinatura}
+                </div>`;
+            });
+        }
+
+        function filtrarHistoricoPortaria() {
+            const termo = document.getElementById('busca-historico').value.toLowerCase();
+            const filtrados = historicoPortariaLocal.filter(p => 
+                p.bloco.toLowerCase().includes(termo) || 
+                p.apto.toLowerCase().includes(termo) || 
+                (p.codigo_barras && p.codigo_barras.toLowerCase().includes(termo))
+            );
+            renderizarHistorico(filtrados);
+        }
+
+        function renderizarHistorico(lista) {
+            const container = document.getElementById('lista-historico-portaria');
+            container.innerHTML = '';
+
+            if(lista.length === 0) {
+                container.innerHTML = '<div class="text-center p-4 border rounded-4 bg-white shadow-sm text-muted">Nenhum pacote encontrado.</div>';
+                return;
+            }
+
+            lista.forEach(p => {
+                let dataChegada = new Date(p.data_recebimento).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                let iconeStatus = p.status === 'pendente' ? '<span class="badge bg-warning text-dark">Pendente</span>' : p.status === 'devolvida' ? '<span class="badge bg-danger">Cancelada/Erro</span>' : '<span class="badge bg-success">Entregue</span>';
+                
+                let linhaAssinatura = p.assinatura_url ? `<div class="mt-2 pt-2 border-top"><small class="text-muted d-block mb-1">Comprovante de Retirada:</small><img src="${p.assinatura_url}" style="height: 40px; background: white; border: 1px solid #ccc; border-radius: 4px;"></div>` : '';
+
+                container.innerHTML += `
+                <div class="apex-card p-3 shadow-sm border-0 mb-2" style="background: #f8fafc;">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <strong class="text-dark">Bl ${p.bloco} - Ap ${p.apto}</strong>
+                        ${iconeStatus}
+                    </div>
+                    <code class="d-block text-dark mb-2" style="font-size: 14px;">${p.codigo_barras || 'S/N'}</code>
+                    <small class="text-muted d-block"><i class="bi bi-box-arrow-in-right"></i> Chegou: ${dataChegada}</small>
+                    ${p.data_retirada ? `<small class="text-muted d-block"><i class="bi bi-check2-all"></i> Baixa: ${new Date(p.data_retirada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</small>` : ''}
+                    ${linhaAssinatura}
+                </div>`;
+            });
+        }
+
+        // ==========================================
+        // UI: TROCA DE ABAS DO MORADOR
+        // ==========================================
+        function trocarAbaMorador(abaId, elementoClicado) {
+            // Remove a cor azul de todas as abas e esconde o conteúdo
+            document.querySelectorAll('.morador-tab').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            
+            // Pinta de azul a aba clicada e mostra o conteúdo correspondente
+            elementoClicado.classList.add('active');
+            document.getElementById(abaId).classList.add('active');
+        }
+
+        // ==========================================
+        // MOTOR DO CALENDÁRIO DE RESERVAS (DINÂMICO)
+        // ==========================================
+        let dataSelecionadaReserva = null;
+        let espacoSelecionadoNome = '';
+        let espacoSelecionadoValor = 0;
+
+        // Simulando a disponibilidade
+        const diasOcupadosFake = [3, 5]; 
+
+        function abrirCalendarioReserva(idEspaco, nomeEspaco, valor, regrasHtml) {
+            espacoSelecionadoIdAtual = idEspaco;
+            espacoSelecionadoNome = nomeEspaco;
+            espacoSelecionadoValor = valor;
+            dataSelecionadaReserva = null;
+
+            document.getElementById('nome-espaco-reserva').innerText = nomeEspaco;
+            document.getElementById('valor-espaco-reserva').innerText = valor > 0 ? `R$ ${valor.toFixed(2).replace('.', ',')}` : 'Gratuito';
+            document.getElementById('lbl-valor-escolhido').innerText = valor > 0 ? `R$ ${valor.toFixed(2).replace('.', ',')}` : 'Isento';
+
+            // Puxa a regra do banco (Se o síndico não digitou, põe aviso)
+            document.getElementById('txt-regras-espaco').innerHTML = regrasHtml && regrasHtml !== 'null' ? regrasHtml : 'Nenhum regulamento cadastrado. O uso deve respeitar o bom senso e o regimento do condomínio.';
+
+            document.getElementById('box-confirmacao-reserva').classList.add('d-none');
+            document.getElementById('check-termo-reserva').checked = false;
+
+            const gridCalendario = document.getElementById('lista-dias-calendario');
+            gridCalendario.innerHTML = '';
+
+            let dataAtual = new Date();
+            const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+            // Filtra os dias que já estão reservados para ESTE espaço específico
+            const datasOcupadas = window.reservasCondominio.filter(r => r.espaco_id === idEspaco).map(r => r.data_reserva);
+
+            for (let i = 1; i <= 30; i++) {
+                let dataDia = new Date(); dataDia.setDate(dataAtual.getDate() + i);
+                let diaNum = dataDia.getDate().toString().padStart(2, '0');
+                let mesStr = meses[dataDia.getMonth()];
+                let semStr = diasSemana[dataDia.getDay()];
+                
+                let ano = dataDia.getFullYear();
+                let mesFormat = (dataDia.getMonth() + 1).toString().padStart(2, '0');
+                let dataISO = `${ano}-${mesFormat}-${diaNum}`; // Formato de banco de dados perfeito: 2026-11-25
+
+                let isOcupado = datasOcupadas.includes(dataISO);
+                
+                let classeCSS = isOcupado ? 'dia-reserva ocupado' : 'dia-reserva';
+                let onclickCode = isOcupado ? `alert('Data já reservada por outro vizinho!')` : `clicarDia('${dataISO}', '${diaNum}/${mesFormat}/${ano}', this)`;
+
+                gridCalendario.innerHTML += `<div class="${classeCSS}" onclick="${onclickCode}"><span class="dia-semana">${semStr}</span><span class="dia-numero">${diaNum}</span><span class="dia-mes">${mesStr}</span></div>`;
+            }
+            document.getElementById('modal-reserva').classList.add('active');
+        }
+
+        let espacoSelecionadoIdAtual = null; // Guarda o ID real do banco
+        
+        async function carregarEspacosLazer(condId) {
+            // Busca os espaços ativos deste condomínio no banco de dados
+            const { data: espacos, error } = await supabaseClient.from('espacos').select('*').eq('condominio_id', condId).eq('ativo', true);
+            
+            const areaLazer = document.getElementById('area-botoes-lazer'); // Precisaremos dar ID para a div dos botoes (veja o HTML abaixo)
+            if(!areaLazer) return;
+
+            if(error || !espacos || espacos.length === 0) {
+                areaLazer.innerHTML = '<div class="text-center p-3 text-muted border rounded-3 w-100">Nenhum espaço configurado pelo Síndico.</div>';
+                return;
+            }
+
+            // Busca as reservas ocupadas para pintar de vermelho no calendário
+            const { data: reservasFuturas } = await supabaseClient.from('reservas').select('espaco_id, data_reserva').eq('condominio_id', condId).eq('status', 'confirmada').gte('data_reserva', new Date().toISOString().split('T')[0]);
+
+            window.reservasCondominio = reservasFuturas || []; // Salva na memória
+
+            areaLazer.innerHTML = '';
+            espacos.forEach(esp => {
+                let badgeValor = esp.valor_taxa > 0 ? `<span class="badge bg-primary mt-1">R$ ${esp.valor_taxa.toFixed(2).replace('.',',')}</span>` : `<span class="badge bg-danger mt-1">Gratuito</span>`;
+                
+                // Mapeia ícones baseados no nome (UX Padrão Ouro)
+                let icon = 'bi-cup-straw text-primary';
+                if(esp.nome.toLowerCase().includes('churras')) icon = 'bi-fire text-danger';
+                if(esp.nome.toLowerCase().includes('quadra')) icon = 'bi-dribbble text-warning';
+                
+                areaLazer.innerHTML += `
+                <div class="col-6">
+                    <div class="apex-card p-3 text-center border-0 shadow-sm" style="cursor: pointer; background: #f8fafc;" onclick="abrirCalendarioReserva('${esp.id}', '${esp.nome}', ${esp.valor_taxa}, \`${esp.regras_uso}\`)">
+                        <i class="bi ${icon} d-block mb-2" style="font-size: 2.5rem;"></i>
+                        <strong class="d-block text-dark small">${esp.nome}</strong>
+                        ${badgeValor}
+                    </div>
+                </div>`;
+            });
+            
+            // MÁGICA: Assim que ele carrega as churrasqueiras, ele também puxa as reservas feitas pelo morador!
+            carregarMinhasReservas();
+        }
+
+
+        function clicarDia(dataISO, dataBonita, elemento) {
+            dataSelecionadaReserva = dataISO;
+            document.querySelectorAll('#lista-dias-calendario .dia-reserva').forEach(el => el.classList.remove('selecionado'));
+            elemento.classList.add('selecionado');
+            document.getElementById('lbl-data-escolhida').innerText = dataBonita;
+            document.getElementById('box-confirmacao-reserva').classList.remove('d-none');
+            // Desce o scroll pra focar na assinatura
+            document.getElementById('modal-reserva').querySelector('.canvas-container').scrollTop = 999;
+        }
+
+        function fecharCalendarioReserva() {
+            document.getElementById('modal-reserva').classList.remove('active');
+        }
+
+        function finalizarReservaMorador() {
+            if(!dataSelecionadaReserva) return alert("Selecione uma data verde no calendário.");
+            if(!document.getElementById('check-termo-reserva').checked) return alert("Por favor, marque a caixinha declarando que leu as regras do salão.");
+
+            // Abre o modal escuro para ele assinar de verdade (A mesma assinatura que a portaria usa!)
+            fecharCalendarioReserva();
+            
+            // Recicla as variáveis para o Morador
+            blocoAtual = document.getElementById('lbl-meu-apto').innerText;
+            aptoAtual = dataSelecionadaReserva; // Usando apto para passar a data temporariamente
+            
+            document.getElementById('assinatura-desc').innerText = `Eu concordo em locar o ${espacoSelecionadoNome} para a data selecionada.`;
+            document.getElementById('modal-assinatura').classList.add('active');
+            
+            // Troca a função do botão verde "Concluir" temporariamente para Salvar Reserva
+            document.getElementById('btn-confirmar-entrega').setAttribute('onclick', 'salvarReservaBanco()');
+            document.getElementById('btn-confirmar-entrega').innerText = "Finalizar Agendamento";
+            
+            setTimeout(resizeCanvas, 100); 
+        }
+
+        async function salvarReservaBanco() {
+            // VERIFICAÇÃO DE ASSINATURA EM BRANCO
+            let ctxData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let temAssinatura = false;
+            for (let i = 0; i < ctxData.length; i += 4) { if (ctxData[i + 3] !== 0) { temAssinatura = true; break; } }
+            if (!temAssinatura) return alert("Por favor, desenhe sua assinatura na tela para validar os termos!");
+
+            const btn = document.getElementById('btn-confirmar-entrega');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Salvando Reserva...'; 
+            btn.disabled = true;
+
+            try {
+                // 1. Pega os dados do Morador para preencher a reserva
+                const aptoBruto = document.getElementById('lbl-meu-apto').innerText; // Ex: Bloco A | Apto 101
+                const partesApto = aptoBruto.replace('Bloco ', '').replace('Apto ', '').split('|');
+                const moradorBloco = partesApto[0].trim();
+                const moradorApto = partesApto[1].trim();
+                
+                let assinaturaImagem = canvas.toDataURL('image/png');
+
+                // 2. TENTA SALVAR NO BANCO DE DADOS
+                const { data, error } = await supabaseClient
+                    .from('reservas')
+                    .insert([{
+                        condominio_id: meuCondominioId,
+                        espaco_id: espacoSelecionadoIdAtual, // Variável que criaremos a seguir
+                        morador_id: meuPerfilId,
+                        bloco: moradorBloco,
+                        apto: moradorApto,
+                        data_reserva: dataSelecionadaReserva, // Data no formato YYYY-MM-DD
+                        status: 'confirmada',
+                        assinatura_termo: assinaturaImagem
+                    }]);
+
+                if (error) {
+                    // O banco de dados bloqueou! Provavelmente porque a restrição UNIQUE impediu duas pessoas no mesmo dia.
+                    if(error.code === '23505') throw new Error("Ops! Alguém acabou de reservar esse espaço para este dia. Escolha outra data.");
+                    throw error;
+                }
+
+                alert(`✅ PARABÉNS! Sua data foi garantida.\n\nA reserva do ${espacoSelecionadoNome} foi confirmada com sucesso!`);
+                
+                fecharAssinatura();
+                // Restaura botão original e fecha calendário
+                document.getElementById('btn-confirmar-entrega').setAttribute('onclick', 'confirmarEntrega()');
+                btn.innerHTML = 'Concluir Entrega'; btn.disabled = false;
+                
+                // Recarrega os espaços para a data ficar vermelha na hora
+                carregarEspacosLazer(meuCondominioId);
+
+            } catch (err) {
+                alert("Erro ao salvar: " + err.message);
+                btn.innerHTML = 'Finalizar Agendamento'; btn.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // GESTÃO DE RESERVAS ATIVAS E CONVIDADOS
+        // ==========================================
+        let reservaSelecionadaLimite = 50; // Limite padrão (será atualizado pelo banco)
+        let modalConvidadosObj = null;
+
+        // Adicione esta chamada no final da sua função carregarEspacosLazer() 
+        // para que as reservas carreguem junto com os salões:
+        // carregarMinhasReservas(); 
+
+        async function carregarMinhasReservas() {
+            const container = document.getElementById('lista-minhas-reservas');
+            if(!meuPerfilId) return;
+
+            // Busca as reservas confirmadas Deste Morador, cruzando com a tabela de espaços para pegar o nome e capacidade
+            const { data: minhasReservas, error } = await supabaseClient
+                .from('reservas')
+                .select(`id, data_reserva, status, espacos(nome, capacidade, taxa_cancelamento, horas_cancelamento_gratis)`)
+                .eq('morador_id', meuPerfilId)
+                .eq('status', 'confirmada')
+                .order('data_reserva', { ascending: true });
+
+            if(error || !minhasReservas || minhasReservas.length === 0) {
+                container.innerHTML = '<div class="text-center p-4 border rounded-4 bg-white shadow-sm"><span class="text-muted small">Nenhuma reserva futura encontrada.</span></div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            minhasReservas.forEach(r => {
+                let dataFormatada = new Date(r.data_reserva + "T12:00:00").toLocaleDateString('pt-BR');
+                let nomeEspaco = r.espacos ? r.espacos.nome : 'Espaço';
+                let capacidade = r.espacos ? r.espacos.capacidade : 50;
+
+                container.innerHTML += `
+                <div class="apex-card border-primary p-3 bg-white d-flex flex-column gap-2 shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                        <strong class="text-dark fs-6">${nomeEspaco}</strong>
+                        <span class="badge bg-success">Confirmada</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-1">
+                        <span class="text-muted fw-bold"><i class="bi bi-calendar-check me-1"></i> ${dataFormatada}</span>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="tentarCancelarReserva('${r.id}', '${r.data_reserva}', ${r.espacos.taxa_cancelamento || 0}, ${r.espacos.horas_cancelamento_gratis || 48})">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                            <button class="btn btn-sm btn-apex fw-bold px-3 shadow-sm" onclick="abrirModalConvidados('${r.id}', '${nomeEspaco}', ${capacidade})">
+                                <i class="bi bi-people-fill me-1"></i> Lista VIP
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // ==========================================
+        // SISTEMA FINANCEIRO: CANCELAMENTO DO MORADOR
+        // ==========================================
+        async function tentarCancelarReserva(reservaId, dataReservaStr, valorMulta, horasLimite) {
+            
+            // Finge que o evento é ao meio-dia da data escolhida (fuso de Brasília)
+            const dataEvento = new Date(`${dataReservaStr}T12:00:00-03:00`);
+            const dataAgora = new Date();
+            
+            // Diferença real em horas
+            const horasFaltando = (dataEvento.getTime() - dataAgora.getTime()) / (1000 * 60 * 60);
+
+            if (horasFaltando <= 0) {
+                return alert("BLOQUEADO: A data desta reserva é hoje ou já passou.");
+            }
+
+            let vaiPagarMulta = false;
+            let mensagem = "";
+
+            if (valorMulta > 0 && horasLimite > 0 && horasFaltando < horasLimite) {
+                vaiPagarMulta = true;
+                let valorForm = valorMulta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                
+                // Formata o tempo restante de forma amigável
+                let tempoFaltandoTxt = horasFaltando > 48 ? `${Math.floor(horasFaltando / 24)} dias` : `${Math.floor(horasFaltando)} horas`;
+
+                mensagem = `🚨 ATENÇÃO - MULTA DE CANCELAMENTO!\n\nO condomínio exige antecedência mínima de ${horasLimite} horas, mas faltam apenas ${tempoFaltandoTxt} para o evento.\n\nSerá cobrada uma multa de ${valorForm} no seu próximo boleto.\n\nDeseja confirmar o cancelamento mesmo com a cobrança?`;
+            } else {
+                mensagem = `Cancelamento Gratuito.\nVocê está cancelando dentro do prazo de segurança.\nNenhuma taxa ou multa será cobrada.\n\nConfirmar cancelamento?`;
+            }
+
+            if (!confirm(mensagem)) return; 
+
+            try {
+                let statusFinal = vaiPagarMulta ? 'cancelada_com_multa' : 'cancelada';
+
+                const { error } = await supabaseClient.from('reservas')
+                    .update({ status: statusFinal, data_cancelamento: new Date().toISOString() })
+                    .eq('id', reservaId);
+
+                if(error) throw error;
+
+                if (vaiPagarMulta) alert(`✅ Reserva Cancelada.\nA multa de ${valorMulta.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} foi registrada no sistema.`);
+                else alert("✅ Reserva cancelada com sucesso. Nenhuma taxa foi cobrada.");
+
+                carregarMinhasReservas(); 
+            } catch (err) { alert("Erro ao cancelar: " + err.message); }
+        }
+
+        async function abrirModalConvidados(reservaId, nomeEspaco, capacidade) {
+            document.getElementById('gc-reserva-id').value = reservaId;
+            document.getElementById('gc-espaco-nome').innerText = nomeEspaco;
+            reservaSelecionadaLimite = capacidade || 50;
+            
+            if (!modalConvidadosObj) modalConvidadosObj = new bootstrap.Modal(document.getElementById('modal-convidados'));
+            modalConvidadosObj.show();
+
+            await atualizarListaConvidadosDaTela(reservaId);
+        }
+
+        async function atualizarListaConvidadosDaTela(reservaId) {
+            const ul = document.getElementById('gc-lista-atual');
+            ul.innerHTML = '<li class="list-group-item text-center p-3"><span class="spinner-border spinner-border-sm text-primary"></span> Buscando...</li>';
+
+            const { data: convidados, error } = await supabaseClient.from('convidados').select('*').eq('reserva_id', reservaId).order('nome', { ascending: true });
+
+            if(error) return ul.innerHTML = '<li class="list-group-item text-danger text-center">Erro ao buscar.</li>';
+
+            // Atualiza o contador de capacidade
+            const qtdAtual = convidados ? convidados.length : 0;
+            const badgeContador = document.getElementById('gc-contador');
+            badgeContador.innerText = `${qtdAtual} / ${reservaSelecionadaLimite}`;
+            
+            if(qtdAtual >= reservaSelecionadaLimite) {
+                badgeContador.classList.replace('bg-primary', 'bg-danger');
+            } else {
+                badgeContador.classList.replace('bg-danger', 'bg-primary');
+            }
+
+            ul.innerHTML = '';
+            if(qtdAtual === 0) {
+                ul.innerHTML = '<li class="list-group-item text-muted text-center p-3 small">Sua lista está vazia.</li>';
+                return;
+            }
+
+            convidados.forEach(c => {
+                ul.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center p-2">
+                    <span class="text-dark fw-bold" style="font-size: 0.9rem;">${c.nome}</span>
+                    <button class="btn btn-sm btn-light text-danger border" onclick="removerConvidado('${c.id}', '${reservaId}')"><i class="bi bi-trash3"></i></button>
+                </li>`;
+            });
+        }
+
+        async function importarConvidadosMassa() {
+            const reservaId = document.getElementById('gc-reserva-id').value;
+            const txt = document.getElementById('gc-importacao').value;
+            if(!txt.trim()) return alert("Cole os nomes na caixa de texto primeiro!");
+
+            const btn = document.querySelector('#modal-convidados .btn-outline-primary');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...'; btn.disabled = true;
+
+            // Inteligência: Separa por linha (Enter) ou por Vírgula
+            let nomes = txt.split(/\r?\n|,/).map(n => n.trim()).filter(n => n.length > 2);
+
+            if(nomes.length === 0) {
+                alert("Nenhum nome válido encontrado.");
+                btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Adicionar à Lista'; btn.disabled = false;
+                return;
+            }
+
+            // Checa a capacidade do salão antes de salvar no banco
+            const { count } = await supabaseClient.from('convidados').select('*', { count: 'exact', head: true }).eq('reserva_id', reservaId);
+            const qtdAtual = count || 0;
+
+            if (qtdAtual + nomes.length > reservaSelecionadaLimite) {
+                alert(`LIMITE EXCEDIDO!\nO espaço permite ${reservaSelecionadaLimite} convidados.\nVocê já tem ${qtdAtual} na lista e tentou adicionar mais ${nomes.length}.`);
+                btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Adicionar à Lista'; btn.disabled = false;
+                return;
+            }
+
+            // Prepara a Inserção Múltipla no Supabase
+            const inserts = nomes.map(n => ({ reserva_id: reservaId, nome: n, status_entrada: 'aguardando' }));
+
+            const { error } = await supabaseClient.from('convidados').insert(inserts);
+
+            if(error) {
+                alert("Erro ao salvar lista: " + error.message);
+            } else {
+                document.getElementById('gc-importacao').value = ''; // Limpa a caixa
+                atualizarListaConvidadosDaTela(reservaId); // Atualiza a tela instantaneamente
+            }
+
+            btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i> Adicionar à Lista'; btn.disabled = false;
+        }
+
+        async function removerConvidado(convidadoId, reservaId) {
+            const { error } = await supabaseClient.from('convidados').delete().eq('id', convidadoId);
+            if(!error) {
+                atualizarListaConvidadosDaTela(reservaId);
+            }
+        }
+
+
+        // ==========================================
+        // TELA 9: SÍNDICO (CRIAR E GERENCIAR ESPAÇOS)
+        // ==========================================
+
+
+
+        let espacoEmEdicaoId = null; // Memória para saber se estamos editando ou criando
+
+        // 1. A FUNÇÃO QUE JOGA OS DADOS PRO FORMULÁRIO QUANDO CLICA EM EDITAR
+        function prepararEdicaoEspaco(id) {
+            const esp = espacosMemoriaSindico.find(e => e.id === id);
+            if(!esp) return;
+
+            espacoEmEdicaoId = id; // Avisa o sistema que é uma edição
+            
+            // Preenche os campos
+            document.getElementById('ns-nome').value = esp.nome;
+            document.getElementById('ns-taxa').value = esp.valor_taxa || 0;
+            document.getElementById('ns-cap').value = esp.capacidade || '';
+            document.getElementById('ns-multa').value = esp.taxa_cancelamento || 0;
+            
+            // Converte as horas de volta para dias pro síndico ver
+            let dias = esp.horas_cancelamento_gratis ? (esp.horas_cancelamento_gratis / 24) : 0;
+            document.getElementById('ns-dias').value = dias > 0 ? dias : '';
+            document.getElementById('lbl-horas-calc').innerText = esp.horas_cancelamento_gratis || 0;
+            
+            document.getElementById('ns-regras').value = esp.regras_uso || '';
+
+            // Muda o visual
+            document.getElementById('titulo-form-espaco').innerHTML = `<i class="bi bi-pencil-square text-warning me-1"></i> Editando: <span class="text-warning">${esp.nome}</span>`;
+            document.getElementById('btn-salvar-espaco').innerHTML = '<i class="bi bi-arrow-repeat"></i> Atualizar Espaço';
+            document.getElementById('btn-cancelar-edicao').classList.remove('d-none');
+            
+            // Rola a tela pra cima suavemente
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // 2. FUNÇÃO PARA CANCELAR E LIMPAR TUDO
+        function cancelarEdicaoEspaco() {
+            espacoEmEdicaoId = null;
+            document.getElementById('ns-nome').value = ''; document.getElementById('ns-taxa').value = '';
+            document.getElementById('ns-cap').value = ''; document.getElementById('ns-multa').value = ''; 
+            document.getElementById('ns-dias').value = ''; document.getElementById('lbl-horas-calc').innerText = '0';
+            document.getElementById('ns-regras').value = '';
+
+            document.getElementById('titulo-form-espaco').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Adicionar Novo Espaço';
+            document.getElementById('btn-salvar-espaco').innerHTML = '<i class="bi bi-floppy"></i> Salvar Espaço';
+            document.getElementById('btn-cancelar-edicao').classList.add('d-none');
+        }
+
+        // 3. A FUNÇÃO QUE SALVA (INSERT) OU ATUALIZA (UPDATE)
+        async function salvarEspaco() {
+            const nome = document.getElementById('ns-nome').value.trim();
+            const taxa = parseFloat(document.getElementById('ns-taxa').value) || 0;
+            const cap = parseInt(document.getElementById('ns-cap').value) || 0;
+            const multa = parseFloat(document.getElementById('ns-multa').value) || 0;
+            const prazoDias = parseInt(document.getElementById('ns-dias').value) || 0; 
+            const prazoHorasFinal = prazoDias * 24;
+            const regras = document.getElementById('ns-regras').value.trim();
+
+            if(!nome) return alert("O nome do espaço é obrigatório!");
+
+            const btn = document.getElementById('btn-salvar-espaco');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...'; btn.disabled = true;
+
+            const dadosPacote = {
+                condominio_id: meuCondominioId, nome: nome, valor_taxa: taxa, capacidade: cap, 
+                taxa_cancelamento: multa, horas_cancelamento_gratis: prazoHorasFinal, regras_uso: regras, ativo: true
+            };
+
+            let error;
+            if(espacoEmEdicaoId) {
+                // ATUALIZAR ESPAÇO EXISTENTE
+                const res = await supabaseClient.from('espacos').update(dadosPacote).eq('id', espacoEmEdicaoId);
+                error = res.error;
+            } else {
+                // CRIAR NOVO ESPAÇO
+                const res = await supabaseClient.from('espacos').insert([dadosPacote]);
+                error = res.error;
+            }
+
+            if(error) {
+                alert("Erro ao salvar: " + error.message);
+                btn.innerHTML = espacoEmEdicaoId ? '<i class="bi bi-arrow-repeat"></i> Atualizar Espaço' : '<i class="bi bi-floppy"></i> Salvar Espaço';
+            } else {
+                alert(espacoEmEdicaoId ? "Espaço ATUALIZADO com sucesso!" : "Espaço CRIADO com sucesso!");
+                cancelarEdicaoEspaco(); // Limpa e reseta os botões
+                carregarEspacosSindico(); // Atualiza a lista embaixo
+            }
+            btn.disabled = false;
+        }
+
+        async function excluirEspaco(id, nome) {
+            if(!confirm(`Tem certeza que deseja apagar o espaço "${nome}"?\nTodas as reservas futuras serão perdidas!`)) return;
+            const { error } = await supabaseClient.from('espacos').delete().eq('id', id);
+            if(error) alert("Erro ao excluir: " + error.message);
+            else carregarEspacosSindico();
+        }
+
+        // ==========================================
+        // TELA 8: EVENTOS E CHECK-IN (VISÃO DO PORTEIRO)
+        // ==========================================
+        let convidadosCheckinLocal = [];
+        let reservaCheckinAtual = null;
+
+        async function carregarEventosHoje() {
+            if(!meuCondominioId) return;
+            const container = document.getElementById('lista-eventos-hoje');
+            document.getElementById('area-lista-convidados').classList.add('d-none');
+            container.innerHTML = '<div class="text-center text-muted"><span class="spinner-border spinner-border-sm"></span> Buscando eventos...</div>';
+
+            const hoje = new Date().toISOString().split('T')[0]; // Data de hoje formato YYYY-MM-DD
+
+            // Busca as reservas confirmadas para HOJE
+            const { data: eventos, error } = await supabaseClient.from('reservas')
+                .select(`id, bloco, apto, espacos(nome)`)
+                .eq('condominio_id', meuCondominioId).eq('data_reserva', hoje).eq('status', 'confirmada');
+
+            if(error || !eventos || eventos.length === 0) {
+                return container.innerHTML = '<div class="text-center p-4 border rounded-4 bg-white shadow-sm"><span class="text-muted small">Nenhum evento agendado para hoje.</span></div>';
+            }
+
+            container.innerHTML = '';
+            eventos.forEach(ev => {
+                let nomeSalao = ev.espacos ? ev.espacos.nome : 'Espaço';
+                container.innerHTML += `
+                <div class="apex-card border-warning p-3 bg-white shadow-sm" style="cursor: pointer;" onclick="abrirCheckinFesta('${ev.id}', '${nomeSalao}', '${ev.bloco}', '${ev.apto}')">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark fs-5">${nomeSalao}</strong>
+                        <span class="badge bg-warning text-dark"><i class="bi bi-star-fill"></i> Hoje</span>
+                    </div>
+                    <small class="text-muted fw-bold d-block mb-2">Resp: Bloco ${ev.bloco} - Apto ${ev.apto}</small>
+                    <button class="btn btn-sm btn-outline-dark w-100 fw-bold"><i class="bi bi-list-check"></i> Ver Lista VIP</button>
+                </div>`;
+            });
+        }
+
+        async function abrirCheckinFesta(reservaId, nome, bloco, apto) {
+            reservaCheckinAtual = reservaId;
+            document.getElementById('ci-nome-espaco').innerText = nome;
+            document.getElementById('ci-bloco-apto').innerText = `Bloco ${bloco} - Apto ${apto}`;
+            document.getElementById('area-lista-convidados').classList.remove('d-none');
+            
+            // Rola a tela para baixo
+            setTimeout(() => { document.getElementById('area-lista-convidados').scrollIntoView({ behavior: 'smooth' }); }, 100);
+
+            carregarListaCheckin(reservaId);
+        }
+
+        async function carregarListaCheckin(reservaId) {
+            const ul = document.getElementById('lista-checkin-portaria');
+            ul.innerHTML = '<li class="list-group-item text-center p-3 text-muted"><span class="spinner-border spinner-border-sm"></span> Atualizando portaria...</li>';
+
+            const { data: convidados, error } = await supabaseClient.from('convidados').select('*').eq('reserva_id', reservaId).order('nome', { ascending: true });
+            if(error) return ul.innerHTML = '<li class="list-group-item text-danger text-center">Erro de conexão.</li>';
+
+            convidadosCheckinLocal = convidados || [];
+            renderizarCheckinNaTela(convidadosCheckinLocal);
+        }
+
+        function renderizarCheckinNaTela(lista) {
+            const ul = document.getElementById('lista-checkin-portaria');
+            const contadorBadge = document.getElementById('ci-contador-presentes');
+            ul.innerHTML = '';
+
+            let total = lista.length;
+            let presentes = lista.filter(c => c.status_entrada === 'entrou').length;
+            
+            // Pinta o contador de vermelho se todo mundo já tiver chegado!
+            contadorBadge.innerText = `${presentes} / ${total}`;
+            if(presentes > 0 && presentes === total) contadorBadge.classList.replace('bg-primary', 'bg-danger');
+            else contadorBadge.classList.replace('bg-danger', 'bg-primary');
+
+            if(total === 0) return ul.innerHTML = '<li class="list-group-item text-center p-4 text-muted small">O morador não adicionou ninguém à lista.</li>';
+
+            lista.forEach(c => {
+                let jaEntrou = c.status_entrada === 'entrou';
+                let btnCor = jaEntrou ? 'btn-success' : 'btn-outline-secondary';
+                let btnIcon = jaEntrou ? 'bi-check-all' : 'bi-door-open';
+                let btnTxt = jaEntrou ? 'Presente' : 'Liberar';
+                let txtClass = jaEntrou ? 'text-success fw-bold' : 'text-dark fw-bold';
+
+                ul.innerHTML += `
+                <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <span class="${txtClass}" style="font-size: 0.95rem;">${c.nome}</span>
+                    <button class="btn btn-sm ${btnCor} fw-bold shadow-sm" onclick="fazerCheckinConvidado('${c.id}', ${!jaEntrou})">
+                        <i class="bi ${btnIcon}"></i> ${btnTxt}
+                    </button>
+                </li>`;
+            });
+        }
+
+        function filtrarCheckin() {
+            const termo = document.getElementById('busca-convidado').value.toLowerCase();
+            const filtrados = convidadosCheckinLocal.filter(c => c.nome.toLowerCase().includes(termo));
+            renderizarCheckinNaTela(filtrados);
+        }
+
+        async function fazerCheckinConvidado(convidadoId, liberar) {
+            let novoStatus = liberar ? 'entrou' : 'aguardando';
+            let hora = liberar ? new Date().toISOString() : null; // Marca a hora exata da chegada
+
+            const { error } = await supabaseClient.from('convidados').update({ status_entrada: novoStatus, hora_entrada: hora }).eq('id', convidadoId);
+            
+            if(!error) {
+                // Atualiza a memória e a tela instantaneamente sem ir no banco de novo
+                let index = convidadosCheckinLocal.findIndex(c => c.id === convidadoId);
+                if(index > -1) {
+                    convidadosCheckinLocal[index].status_entrada = novoStatus;
+                    renderizarCheckinNaTela(convidadosCheckinLocal);
+                }
+            } else { alert("Falha ao registrar entrada no servidor."); }
+        }
+
+        function abrirLeituraRegulamento() {
+            document.getElementById('modal-leitura-regras').classList.add('active');
+        }
+
+        function concordarRegulamento() {
+            document.getElementById('modal-leitura-regras').classList.remove('active');
+            document.getElementById('box-aceite-termo').classList.remove('d-none');
+            document.getElementById('check-termo-reserva').checked = true;
+        }
+
+        let espacosMemoriaSindico = []; // Memória para a edição
+
+        async function carregarEspacosSindico() {
+            if(!meuCondominioId) return;
+            const listaEl = document.getElementById('lista-espacos-sindico');
+            listaEl.innerHTML = '<div class="text-center text-muted"><span class="spinner-border spinner-border-sm"></span> Carregando espaços...</div>';
+
+            const { data: cData } = await supabaseClient.from('condominios').select('email_contabilidade, dia_fechamento').eq('id', meuCondominioId).single();
+            if(cData) {
+                if(cData.email_contabilidade) document.getElementById('sind-email-contab').value = cData.email_contabilidade;
+                if(cData.dia_fechamento) document.getElementById('sind-dia-fechamento').value = cData.dia_fechamento;
+            }
+
+            const { data: espacos, error } = await supabaseClient.from('espacos').select('*').eq('condominio_id', meuCondominioId).order('nome');
+            
+            if(error) return listaEl.innerHTML = `<span class="text-danger">Erro: ${error.message}</span>`;
+            if(!espacos || espacos.length === 0) return listaEl.innerHTML = '<span class="text-muted small">Nenhum espaço cadastrado. Use o formulário acima para criar o primeiro!</span>';
+
+            espacosMemoriaSindico = espacos; // Salva na memória global para a edição
+            listaEl.innerHTML = '';
+
+            espacos.forEach(esp => {
+                let statusBadge = esp.ativo ? '<span class="badge bg-success">Ativo</span>' : '<span class="badge bg-secondary">Inativo</span>';
+                let valorBadge = esp.valor_taxa > 0 ? `Taxa: R$ ${esp.valor_taxa.toFixed(2)}` : 'Gratuito';
+                
+                listaEl.innerHTML += `
+                <div class="apex-card p-3 shadow-sm border-0 mb-3 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <strong class="text-dark fs-6">${esp.nome}</strong>
+                        ${statusBadge}
+                    </div>
+                    <div class="small text-muted mb-3">
+                        <i class="bi bi-people-fill"></i> Cap: ${esp.capacidade || 'Livre'} | <i class="bi bi-cash"></i> ${valorBadge} <br>
+                        <i class="bi bi-x-circle text-danger"></i> Multa Canc: R$ ${(esp.taxa_cancelamento || 0).toFixed(2)}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary fw-bold flex-grow-1 shadow-sm" onclick="prepararEdicaoEspaco('${esp.id}')"><i class="bi bi-pencil"></i> Editar</button>
+                        <button class="btn btn-sm btn-outline-danger fw-bold flex-grow-1 shadow-sm" onclick="excluirEspaco('${esp.id}', '${esp.nome}')"><i class="bi bi-trash"></i> Excluir</button>
+                    </div>
+                </div>`;
+            });
+        }
+
+        async function salvarAutomacaoFinanceira() {
+            const email = document.getElementById('sind-email-contab').value.trim();
+            const dia = parseInt(document.getElementById('sind-dia-fechamento').value);
+
+            if(!email || !email.includes('@')) return alert("Digite um e-mail válido.");
+            if(!dia || dia < 1 || dia > 31) return alert("Digite um dia de fechamento válido (Ex: 31).");
+            
+            const btn = document.getElementById('btn-salvar-email');
+            btn.innerHTML = '...'; btn.disabled = true;
+
+            const { error } = await supabaseClient.from('condominios').update({ email_contabilidade: email, dia_fechamento: dia }).eq('id', meuCondominioId);
+            
+            if(error) alert("Erro: " + error.message);
+            else alert(`Configurações salvas!\nO sistema enviará o faturamento automaticamente todo dia ${dia}.`);
+            
+            btn.innerHTML = '<i class="bi bi-floppy"></i> Salvar'; btn.disabled = false;
+        }
+
+
+        async function dispararFechamentoNuvem() {
+            const email = document.getElementById('sind-email-contab').value;
+            if (!email) return alert("Salve o E-mail da contabilidade acima primeiro!");
+
+            let dataHoje = new Date();
+            let mesDef = (dataHoje.getMonth() + 1).toString().padStart(2, '0');
+            let anoDef = dataHoje.getFullYear();
+            
+            let inputMes = prompt(`O relatório será enviado para: ${email}\n\nDigite o MÊS e ANO (MM/AAAA):`, `${mesDef}/${anoDef}`);
+            if(!inputMes) return;
+            let partes = inputMes.split('/');
+            if(partes.length !== 2) return alert("Formato inválido. Use MM/AAAA.");
+
+            let mesCobrado = partes[0];
+            let anoCobrado = partes[1];
+
+            const btn = document.getElementById('btn-fechar-manual');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Gerando Relatório e Enviando...'; 
+            btn.disabled = true;
+
+            try {
+                // 1. Busca as reservas do mês (Confirmadas e Multas de Cancelamento)
+                let ultimoDia = new Date(anoCobrado, mesCobrado, 0).getDate();
+                let dataIni = `${anoCobrado}-${mesCobrado}-01`;
+                let dataFim = `${anoCobrado}-${mesCobrado}-${ultimoDia}`;
+
+                const { data: reservas, error } = await supabaseClient
+                    .from('reservas')
+                    .select(`id, bloco, apto, data_reserva, status, espacos(nome, valor_taxa, taxa_cancelamento)`)
+                    .eq('condominio_id', meuCondominioId)
+                    .in('status', ['confirmada', 'cancelada_com_multa'])
+                    .gte('data_reserva', dataIni)
+                    .lte('data_reserva', dataFim)
+                    .order('data_reserva', { ascending: true });
+
+                if (error) throw error;
+
+                // 2. Monta o HTML do E-mail e o conteúdo do arquivo CSV
+                let totalArrecadado = 0;
+                let linhasTabela = "";
+                let csvContent = "Bloco;Apto;Espaco;Data;Tipo;Valor_RS\n"; // Cabeçalho do CSV
+
+                if (!reservas || reservas.length === 0) {
+                    linhasTabela = "<tr><td colspan='4' style='text-align:center; padding:15px; color:#888;'>Nenhuma reserva ou multa faturada neste mês.</td></tr>";
+                } else {
+                    reservas.forEach(r => {
+                        let isMulta = r.status === 'cancelada_com_multa';
+                        let valor = isMulta ? (r.espacos.taxa_cancelamento || 0) : (r.espacos.valor_taxa || 0);
+                        
+                        if(valor <= 0) return; // Pula os gratuitos
+
+                        totalArrecadado += valor;
+                        let dataFmt = new Date(r.data_reserva + "T12:00:00").toLocaleDateString('pt-BR');
+                        let badgeTipo = isMulta ? `<span style="background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px;">MULTA</span> ` : "";
+                        let tipoCSV = isMulta ? "Multa Canc." : "Reserva";
+                        
+                        linhasTabela += `
+                            <tr style="border-bottom: 1px solid #e2e8f0;">
+                                <td style="padding: 10px;">Bl ${r.bloco} - Ap ${r.apto}</td>
+                                <td style="padding: 10px;">${badgeTipo}${r.espacos.nome}</td>
+                                <td style="padding: 10px; text-align: center;">${dataFmt}</td>
+                                <td style="padding: 10px; text-align: right; color: ${isMulta ? '#ef4444' : '#10B981'}; font-weight: bold;">R$ ${valor.toFixed(2).replace('.', ',')}</td>
+                            </tr>`;
+                            
+                        // Adiciona a linha no CSV
+                        csvContent += `${r.bloco};${r.apto};${r.espacos.nome};${dataFmt};${tipoCSV};${valor.toFixed(2).replace('.', ',')}\n`;
+                    });
+                }
+
+                // 3. Monta o Layout Padrão do E-mail e do PDF
+                let htmlEmail = `
+                <div style="font-family: Arial, sans-serif; color: #333; border: 1px solid #cbd5e1; max-width: 650px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); background: white;">
+                    <div style="text-align: center; background-color: #052439; padding: 30px 20px;">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">ApexSys Reservas</h1>
+                    </div>
+                    <div style="padding: 25px;">
+                        <h2 style="color: #10B981; text-align: center; margin-top: 0;">Fechamento Mensal de Áreas Comuns</h2>
+                        <p style="font-size: 14px; color: #555;">Olá, equipe da contabilidade!</p>
+                        <p style="font-size: 14px; color: #555;">Segue o relatório de faturamento referente às reservas de áreas comuns do mês <b>${mesCobrado}/${anoCobrado}</b> para lançamento em taxa de condomínio.</p>
+                        
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 25px; font-size: 13px;">
+                            <thead style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                                <tr>
+                                    <th style="padding: 12px; text-align: left; color: #475569;">Unidade</th>
+                                    <th style="padding: 12px; text-align: left; color: #475569;">Espaço</th>
+                                    <th style="padding: 12px; text-align: center; color: #475569;">Data</th>
+                                    <th style="padding: 12px; text-align: right; color: #475569;">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${linhasTabela}
+                            </tbody>
+                            <tfoot>
+                                <tr style="background-color: #10B981; color: white;">
+                                    <td colspan="3" style="padding: 15px; text-align: right; font-weight: bold; font-size: 15px;">TOTAL A FATURAR:</td>
+                                    <td style="padding: 15px; text-align: right; font-weight: bold; font-size: 18px;">R$ ${totalArrecadado.toFixed(2).replace('.', ',')}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        
+                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 30px 0 20px 0;">
+                        <p style="font-size: 11px; color: #94a3b8; text-align: center;">Documento gerado automaticamente pelo sistema ApexSys.</p>
+                    </div>
+                </div>`;
+
+                // 4. MÁGICA DO PDF: Transforma o HTML numa imagem PDF real e injeta no E-mail
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Renderizando PDF...'; 
+                let containerPDF = document.createElement("div");
+                containerPDF.innerHTML = htmlEmail;
+                
+                let opt = { 
+                    margin: 5, 
+                    filename: `Fechamento_${mesCobrado}_${anoCobrado}.pdf`, 
+                    image: { type: 'jpeg', quality: 0.98 }, 
+                    html2canvas: { scale: 2 }, 
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+                };
+
+                // Gera o Base64 do PDF e tira o prefixo ("data:application/pdf;base64,")
+                let pdfRaw = await html2pdf().set(opt).from(containerPDF).outputPdf('datauristring');
+                let pdfBase64Limpo = pdfRaw.split(',')[1];
+
+                // 5. MÁGICA DO PDF E DO CSV JUNTOS NO E-MAIL!
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Anexando e Enviando...'; 
+                
+                // Transforma o CSV em Base64 para o Google conseguir ler
+                let encodeCSV = btoa(unescape(encodeURIComponent("\uFEFF" + csvContent))); 
+                
+                // 👇 COLOQUE AQUI A URL NOVA DO SEU NOVO ROBÔ!
+                const urlGoogleAPI = "https://script.google.com/macros/s/AKfycbxHIJJhyLV8_cG62MOWU2mnH3lsvJa3eoZsWIcfUD9CL0owoObg-STX47cJRDL507jr/exec";
+
+                let pacoteDados = {
+                    emailDestino: email,
+                    assunto: `Fechamento de Reservas - ${mesCobrado}/${anoCobrado}`,
+                    corpoHtml: htmlEmail,
+                    pdfBase64: pdfBase64Limpo, 
+                    nomeArquivo: `Fechamento_Reservas_${mesCobrado}_${anoCobrado}.pdf`,
+                    csvBase64: encodeCSV, // 🚀 INJETAMOS O CSV AQUI!
+                    nomeArquivoCsv: `Integracao_Reservas_${mesCobrado}_${anoCobrado}.csv`,
+                    nomeDaSuaEmpresa: "ApexSys Entregas"
+                };
+
+                await fetch(urlGoogleAPI, {
+                    method: "POST",
+                    body: JSON.stringify(pacoteDados),
+                    headers: { "Content-Type": "text/plain;charset=utf-8" } 
+                });
+
+                // 6. Por segurança, também baixa o CSV no computador do Síndico na hora
+                const link = document.createElement("a");
+                link.href = "data:text/csv;base64," + encodeCSV;
+                link.download = `Integração_Reservas_${mesCobrado}_${anoCobrado}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                alert(`✅ E-mail enviado com PDF e CSV anexados com sucesso!`);
+            } catch (err) { 
+                alert("Ops! Erro ao processar: " + err.message); 
+            }
+
+            btn.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-2"></i> Processar e Enviar para Contabilidade'; 
+            btn.disabled = false;
+        }
+
+        let blocoOc = ''; let aptoOc = '';
+        let fotoOcorrenciaBase64 = null;
+        let ocorrenciaEmEdicaoId = null; // AVISO PARA O SISTEMA SE É UMA EDIÇÃO
+        let ocorrenciasMemoria = []; 
+
+        function toggleAptosOcorrencia(mostrar) {
+            const box = document.getElementById('box-vinculo-ocorrencia');
+            if (mostrar) { box.classList.remove('d-none'); renderizarBlocosOc(); } 
+            else { box.classList.add('d-none'); blocoOc = ''; aptoOc = ''; }
+        }
+
+        function renderizarBlocosOc() {
+            const grid = document.getElementById('grid-blocos-oc'); grid.innerHTML = '';
+            if (Object.keys(aptosAgrupadosPin).length === 0) return grid.innerHTML = '<span class="text-muted small">Carregando...</span>';
+            const blocosOrd = Object.keys(aptosAgrupadosPin).sort((a,b) => (isNaN(parseInt(a)) ? a.localeCompare(b) : parseInt(a)-parseInt(b)));
+            blocosOrd.forEach(b => { grid.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarBlocoOc('${b}', this)">${b}</div>`; });
+        }
+
+        function selecionarBlocoOc(bloco, el) {
+            blocoOc = bloco; aptoOc = '';
+            document.querySelectorAll('#grid-blocos-oc .btn-selecao').forEach(e => e.classList.remove('active'));
+            if(el) el.classList.add('active');
+            document.getElementById('lbl-bloco-oc').innerText = bloco;
+            document.getElementById('container-aptos-oc').classList.remove('d-none');
+            
+            const gridAp = document.getElementById('grid-aptos-oc'); gridAp.innerHTML = '';
+            const aptosOrd = aptosAgrupadosPin[bloco].sort((a,b) => (isNaN(parseInt(a.numero)) ? a.numero.localeCompare(b.numero) : parseInt(a.numero)-parseInt(b.numero)));
+            aptosOrd.forEach(a => { gridAp.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarAptoOc('${a.numero}', this)">${a.numero}</div>`; });
+        }
+
+        function selecionarAptoOc(apto, el) {
+            aptoOc = apto;
+            document.querySelectorAll('#grid-aptos-oc .btn-selecao').forEach(e => e.classList.remove('active'));
+            if(el) el.classList.add('active');
+        }
+
+        function processarFotoOcorrencia(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = MAX_WIDTH; canvas.height = img.height * scaleSize;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    fotoOcorrenciaBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('preview-foto-oc').src = fotoOcorrenciaBase64;
+                    document.getElementById('preview-foto-box').classList.remove('d-none');
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function removerFotoOc() {
+            fotoOcorrenciaBase64 = null;
+            document.getElementById('preview-foto-box').classList.add('d-none');
+            document.getElementById('input-foto-oc').value = '';
+        }
+
+        // --- SISTEMA DE EDIÇÃO ---
+        function prepararEdicaoOcorrencia(id) {
+            const oc = ocorrenciasMemoria.find(o => o.id === id);
+            if(!oc) return;
+
+            ocorrenciaEmEdicaoId = id;
+
+            // Preenche o formulário
+            document.getElementById('txt-nome-registrador').value = oc.nome_registrador || '';
+            document.getElementById('txt-ocorrencia').value = oc.relato || '';
+            
+            // Lida com o vínculo do apartamento
+            if(oc.bloco && oc.apto) {
+                document.getElementById('switch-vinculo').checked = true;
+                toggleAptosOcorrencia(true);
+                setTimeout(() => {
+                    selecionarBlocoOc(oc.bloco, null);
+                    selecionarAptoOc(oc.apto, null);
+                }, 500);
+            } else {
+                document.getElementById('switch-vinculo').checked = false;
+                toggleAptosOcorrencia(false);
+            }
+
+            // Muda botões
+            document.getElementById('btn-enviar-ocorrencia').innerHTML = '<i class="bi bi-pencil-square me-2"></i> Atualizar Registro';
+            document.getElementById('btn-enviar-ocorrencia').classList.replace('btn-danger', 'btn-warning');
+            document.getElementById('btn-cancelar-edicao-oc').classList.remove('d-none');
+            
+            // Sobe a tela suavemente
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicaoOcorrencia() {
+            ocorrenciaEmEdicaoId = null;
+            document.getElementById('txt-nome-registrador').value = '';
+            document.getElementById('txt-ocorrencia').value = '';
+            document.getElementById('switch-vinculo').checked = false;
+            toggleAptosOcorrencia(false);
+            removerFotoOc();
+
+            document.getElementById('btn-enviar-ocorrencia').innerHTML = '<i class="bi bi-send-fill me-2"></i> Registrar Ocorrência';
+            document.getElementById('btn-enviar-ocorrencia').classList.replace('btn-warning', 'btn-danger');
+            document.getElementById('btn-cancelar-edicao-oc').classList.add('d-none');
+        }
+
+        async function excluirOcorrencia(id) {
+            if(!confirm("ALERTA: Tem certeza que deseja APAGAR esta ocorrência? Essa ação não pode ser desfeita.")) return;
+            const { error } = await supabaseClient.from('ocorrencias').delete().eq('id', id);
+            if(error) alert("Erro ao apagar: " + error.message);
+            else { alert("Ocorrência apagada com sucesso!"); carregarOcorrenciasSindico(); }
+        }
+
+        // --- ENVIAR OU ATUALIZAR ---
+        async function enviarOcorrencia() {
+            const nomeRegistrador = document.getElementById('txt-nome-registrador').value.trim();
+            const relato = document.getElementById('txt-ocorrencia').value.trim();
+            const vincular = document.getElementById('switch-vinculo').checked;
+
+            if (!nomeRegistrador) return alert("❌ O NOME de quem está registrando é OBRIGATÓRIO!");
+            if (!relato) return alert("❌ Digite o relato da ocorrência!");
+            if (vincular && (!blocoOc || !aptoOc)) return alert("Você marcou para vincular a um apartamento, mas não selecionou o Bloco/Apto.");
+
+            const btn = document.getElementById('btn-enviar-ocorrencia');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processando...'; btn.disabled = true;
+
+            try {
+                let pacoteDados = {
+                    condominio_id: meuCondominioId, 
+                    porteiro_id: meuPerfilId, 
+                    bloco: vincular ? blocoOc : null, 
+                    apto: vincular ? aptoOc : null, 
+                    relato: relato,
+                    nome_registrador: nomeRegistrador,
+                    foto_url: fotoOcorrenciaBase64 // Envia a foto se tiver
+                };
+
+                let erroBanco;
+
+                if (ocorrenciaEmEdicaoId) {
+                    // SE ESTIVER EDITANDO, ADICIONA A DATA DA EDIÇÃO!
+                    pacoteDados.data_edicao = new Date().toISOString();
+                    const { error } = await supabaseClient.from('ocorrencias').update(pacoteDados).eq('id', ocorrenciaEmEdicaoId);
+                    erroBanco = error;
+                } else {
+                    // SE FOR NOVA
+                    const { error } = await supabaseClient.from('ocorrencias').insert([pacoteDados]);
+                    erroBanco = error;
+                }
+
+                if (erroBanco) throw erroBanco;
+
+                alert(ocorrenciaEmEdicaoId ? "✅ Ocorrência ATUALIZADA com sucesso!" : "🚨 Ocorrência REGISTRADA com sucesso!");
+                
+                cancelarEdicaoOcorrencia(); // Limpa tudo
+                carregarOcorrenciasSindico(); // Atualiza a lista embaixo
+
+            } catch (err) { alert("Erro ao enviar: " + err.message); }
+            
+            btn.innerHTML = ocorrenciaEmEdicaoId ? '<i class="bi bi-pencil-square me-2"></i> Atualizar Registro' : '<i class="bi bi-send-fill me-2"></i> Registrar Ocorrência'; 
+            btn.disabled = false;
+        }
+
+        async function carregarOcorrenciasSindico() {
+            if(!meuCondominioId) return;
+            const listaEl = document.getElementById('lista-ocorrencias-sindico');
+
+            const { data: ocs, error } = await supabaseClient
+                .from('ocorrencias')
+                .select('id, bloco, apto, relato, foto_url, created_at, nome_registrador, data_edicao')
+                .eq('condominio_id', meuCondominioId)
+                .order('created_at', { ascending: false });
+
+            if(error) {
+                listaEl.innerHTML = `<span class="text-danger small">Erro: ${error.message}</span>`;
+                return;
+            }
+            
+            if(!ocs || ocs.length === 0) {
+                listaEl.innerHTML = '<div class="text-center p-3 text-muted small">Nenhuma ocorrência encontrada.</div>';
+                return;
+            }
+
+            ocorrenciasMemoria = ocs;
+            renderizarOcorrencias(ocorrenciasMemoria);
+        }
+
+        function renderizarOcorrencias(lista) {
+            const listaEl = document.getElementById('lista-ocorrencias-sindico');
+            listaEl.innerHTML = '';
+
+            if(lista.length === 0) {
+                listaEl.innerHTML = '<div class="text-center p-3 text-muted small">Nenhuma ocorrência encontrada na pesquisa.</div>';
+                return;
+            }
+
+            lista.forEach(oc => {
+                let dataCriacao = new Date(oc.created_at).toLocaleString('pt-BR');
+                let unidade = (oc.bloco && oc.apto) ? `Bl ${oc.bloco} - Ap ${oc.apto}` : 'Área Comum';
+                let nomeResponsavel = oc.nome_registrador ? oc.nome_registrador.toUpperCase() : 'NÃO INFORMADO';
+                
+                // MÁGICA DA DATA DE EDIÇÃO
+                let badgeEdicao = oc.data_edicao ? `<span class="badge bg-warning text-dark ms-2" title="Editado em: ${new Date(oc.data_edicao).toLocaleString('pt-BR')}"><i class="bi bi-pencil"></i> Editado</span>` : '';
+                
+                let linhaFoto = oc.foto_url ? `<div class="mt-3 text-center"><img src="${oc.foto_url}" style="max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid #ccc;"></div>` : '';
+
+                listaEl.innerHTML += `
+                <div class="border rounded-3 p-3 bg-light shadow-sm mb-3" style="border-left: 4px solid #ef4444 !important;">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <span class="badge bg-dark">${unidade}</span>
+                            ${badgeEdicao}
+                        </div>
+                        <small class="text-muted fw-bold" style="font-size: 11px;"><i class="bi bi-clock"></i> Criado: ${dataCriacao}</small>
+                    </div>
+                    
+                    <p class="mb-2 text-dark" style="font-size: 0.9rem; line-height: 1.4; white-space: pre-wrap;">${oc.relato}</p>
+                    ${linhaFoto}
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <small class="text-danger fw-bold" style="font-size: 11px;"><i class="bi bi-person-badge"></i> Resp: ${nomeResponsavel}</small>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-primary" onclick="prepararEdicaoOcorrencia('${oc.id}')" title="Editar"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="excluirOcorrencia('${oc.id}')" title="Apagar"><i class="bi bi-trash"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function filtrarOcorrenciasSindico() {
+            const termo = document.getElementById('busca-ocorrencia-sindico').value.toLowerCase();
+            const filtrados = ocorrenciasMemoria.filter(oc => {
+                let txtBusca = `${oc.bloco || ''} ${oc.apto || ''} ${oc.relato} ${oc.nome_registrador || ''} ${new Date(oc.created_at).toLocaleDateString('pt-BR')}`.toLowerCase();
+                return txtBusca.includes(termo);
+            });
+            renderizarOcorrencias(filtrados);
+        }
+    </script>
+</body>
+</html>
