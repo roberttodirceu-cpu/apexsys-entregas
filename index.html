@@ -272,20 +272,60 @@
     <div id="screen-dashboard" class="app-screen container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Resumo de Hoje</h5>
-            <button class="btn btn-sm btn-light border text-muted" onclick="carregarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
+            <button class="btn btn-sm btn-light border text-muted shadow-sm" onclick="carregarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
         </div>
-        <div class="row text-center">
+        <div class="row text-center mb-4">
             <div class="col-6">
-                <div class="apex-card bg-warning text-dark border-0">
+                <div class="apex-card bg-warning text-dark border-0 shadow-sm py-3">
                     <h2 id="dash-pendentes" class="mb-0 fw-bold">0</h2>
                     <small class="fw-bold">Pendentes</small>
                 </div>
             </div>
             <div class="col-6">
-                <div class="apex-card bg-success text-white border-0">
+                <div class="apex-card bg-success text-white border-0 shadow-sm py-3">
                     <h2 id="dash-entregues" class="mb-0 fw-bold">0</h2>
                     <small class="fw-bold">Entregues</small>
                 </div>
+            </div>
+        </div>
+
+        <!-- ATALHOS INTELIGENTES (SÓ APARECEM SE TIVER PERMISSÃO) -->
+        <h6 class="fw-bold text-muted mb-2">Serviços da Portaria</h6>
+        <div class="d-flex flex-column gap-2 mb-4">
+            <!-- Atalho de Eventos de Hoje -->
+            <div id="card-atalho-eventos" class="apex-card p-3 d-flex justify-content-between align-items-center shadow-sm border-0 d-none" style="cursor: pointer;" onclick="navigate('screen-checkin')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3"><i class="bi bi-calendar2-check fs-4"></i></div>
+                    <div>
+                        <strong class="d-block text-dark">Eventos e Festas de Hoje</strong>
+                        <small class="text-muted">Lista VIP de convidados da área de lazer</small>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+
+            <!-- Atalho de Aptos / PINs -->
+            <div class="apex-card p-3 d-flex justify-content-between align-items-center shadow-sm border-0" style="cursor: pointer;" onclick="navigate('screen-aptos')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-dark bg-opacity-10 text-dark p-2 rounded-3"><i class="bi bi-key fs-4"></i></div>
+                    <div>
+                        <strong class="d-block text-dark">PINs dos Apartamentos</strong>
+                        <small class="text-muted">Consultar e resetar acessos</small>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-right text-muted"></i>
+            </div>
+
+            <!-- Atalho EXCLUSIVO DO SÍNDICO (Bloqueado para porteiros) -->
+            <div id="card-atalho-sindico" class="apex-card p-3 d-flex justify-content-between align-items-center shadow-sm border-0 d-none" style="background: #eef2ff; cursor: pointer;" onclick="navigate('screen-sindico')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary text-white p-2 rounded-3"><i class="bi bi-gear-fill fs-4"></i></div>
+                    <div>
+                        <strong class="d-block text-primary">Painel de Gestão do Síndico</strong>
+                        <small class="text-muted">Cadastrar espaços e fechamento financeiro</small>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-right text-primary"></i>
             </div>
         </div>
     </div>
@@ -711,19 +751,18 @@
         </div>
     </div>
 
-   <!-- BOTTOM NAVIGATION -->
-    <nav id="bottom-nav" class="bottom-nav d-none" style="padding: 10px 0 15px 0;">
-        <a href="#" class="nav-item active" style="width: 20%;" onclick="navigate('screen-dashboard', this)"><i class="bi bi-grid"></i> Início</a>
-        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-scan', this)"><div class="fab-scan" style="width: 50px; height: 50px; font-size: 1.4rem; transform: translateY(-20px);"><i class="bi bi-qr-code-scan"></i></div></a>
-        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-pendentes', this)"><i class="bi bi-box-seam"></i> Entregar</a>
+   <!-- BOTTOM NAVIGATION (ESPAÇAMENTO PERFEITO PARA CELULAR) -->
+    <nav id="bottom-nav" class="bottom-nav d-none">
+        <a href="#" class="nav-item active" onclick="navigate('screen-dashboard', this)"><i class="bi bi-grid"></i> <span>Início</span></a>
+        <a href="#" class="nav-item" onclick="navigate('screen-pendentes', this)"><i class="bi bi-box-seam"></i> <span>Entregar</span></a>
         
-        <!-- O NOVO BOTÃO DE OCORRÊNCIAS -->
-        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-ocorrencias', this)"><i class="bi bi-shield-exclamation"></i> Ocorrência</a>
+        <!-- BOTÃO SCANNER CENTRAL -->
+        <a href="#" class="nav-item" onclick="navigate('screen-scan', this)">
+            <div class="fab-scan"><i class="bi bi-qr-code-scan"></i></div>
+        </a>
         
-        <a href="#" class="nav-item" style="width: 20%;" onclick="navigate('screen-historico', this)"><i class="bi bi-clock-history"></i> Histórico</a>
-        <a href="#" id="btn-nav-eventos" class="nav-item d-none" style="width: 20%;" onclick="navigate('screen-checkin', this)"><i class="bi bi-calendar2-check"></i> Eventos</a>
-        <a href="#" class="nav-item d-none" style="width: 20%;" onclick="navigate('screen-aptos', this)"><i class="bi bi-key"></i> Aptos</a>
-        <a href="#" id="btn-nav-sindico" class="nav-item d-none" style="width: 20%;" onclick="navigate('screen-sindico', this)"><i class="bi bi-gear"></i> Síndico</a>
+        <a href="#" class="nav-item" onclick="navigate('screen-ocorrencias', this)"><i class="bi bi-shield-exclamation"></i> <span>Ocorrência</span></a>
+        <a href="#" class="nav-item" onclick="navigate('screen-historico', this)"><i class="bi bi-clock-history"></i> <span>Histórico</span></a>
     </nav>
 
     <!-- TELA 8: CHECK-IN DE CONVIDADOS (VISÃO DO PORTEIRO) -->
@@ -932,14 +971,16 @@
                         document.getElementById('top-navbar').classList.remove('d-none');
                         document.getElementById('bottom-nav').classList.remove('d-none');
                         
-                        // LIGA O BOTÃO DE EVENTOS SE O PRÉDIO PAGOU O MÓDULO (Cross-sell Validation)
+                        // LIGA O ATALHO DE EVENTOS SE O PRÉDIO PAGOU O MÓDULO
                         if(condData && condData.modulo_reservas === true) {
-                            document.getElementById('btn-nav-eventos').classList.remove('d-none');
+                            document.getElementById('card-atalho-eventos')?.classList.remove('d-none');
                         }
 
-                        // SE FOR O SÍNDICO LOGADO, LIGA O BOTÃO DE ADMIN DELE
+                        // SÓ MOSTRA O PAINEL SE FOR SÍNDICO DE VERDADE (Bloqueia porteiros)
                         if(perfil.role === 'sindico' || perfil.role === 'superadmin') {
-                            document.getElementById('btn-nav-sindico').classList.remove('d-none');
+                            document.getElementById('card-atalho-sindico')?.classList.remove('d-none');
+                        } else {
+                            document.getElementById('card-atalho-sindico')?.classList.add('d-none');
                         }
 
                         // MÁGICA QUE FALTAVA: Força a busca dos blocos pro Porteiro não ficar esperando
