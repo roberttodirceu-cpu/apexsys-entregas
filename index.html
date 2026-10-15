@@ -1455,9 +1455,21 @@
                     let codigoResumido = numeroDoPacote.length > 25 ? numeroDoPacote.substring(0, 12) + '...' + numeroDoPacote.substring(numeroDoPacote.length - 6) : numeroDoPacote;
 
                     if(pacote.status === 'pendente') {
+                        // DISCRIMINA SE É CARTÃO OU PACOTE PARA O MORADOR
+                        const isCartao = pacote.tipo_encomenda === 'cartao';
+                        const badgeTipo = isCartao 
+                            ? '<span class="badge bg-info text-white mb-2 shadow-sm"><i class="bi bi-credit-card-2-front-fill me-1"></i> Cartão Bancário</span>' 
+                            : '<span class="badge bg-warning text-dark mb-2 shadow-sm"><i class="bi bi-box-seam me-1"></i> Pacote / Encomenda</span>';
+
+                        const bordaCard = isCartao ? 'border-info' : 'border-warning';
+                        const fundoCard = isCartao ? 'bg-info' : 'bg-warning';
+
                         listaEl.innerHTML += `
-                        <div class="apex-card border-warning p-3 bg-warning bg-opacity-10 shadow-sm border mb-3">
-                            <span class="badge bg-warning text-dark mb-2"><i class="bi bi-box-seam me-1"></i> Na Portaria</span>
+                        <div class="apex-card ${bordaCard} p-3 ${fundoCard} bg-opacity-10 shadow-sm border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                ${badgeTipo}
+                                <span class="badge bg-white text-dark border">Aguardando Retirada</span>
+                            </div>
                             
                             <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: white; border: 1px dashed #fbbf24;">
                                 <div style="overflow: hidden;">
@@ -1839,14 +1851,28 @@
             elemento.classList.add('active');
 
             document.getElementById('area-entrega-pendente').classList.remove('d-none');
-            const qtdPacotes = pendentesPorBloco[bloco][apto].length;
+            
+            // SEPARAÇÃO INTELIGENTE DE PACOTES E CARTÕES
+            const itensDoApto = pendentesPorBloco[bloco][apto];
+            const qtdPacotes = itensDoApto.filter(p => p.tipo_encomenda !== 'cartao').length;
+            const qtdCartoes = itensDoApto.filter(p => p.tipo_encomenda === 'cartao').length;
+
+            let badgesDiscriminadas = '';
+            if(qtdPacotes > 0) {
+                badgesDiscriminadas += `<span class="badge bg-warning text-dark px-3 py-2 fs-6 shadow-sm"><i class="bi bi-box-seam me-1"></i> ${qtdPacotes} Pacote(s)</span> `;
+            }
+            if(qtdCartoes > 0) {
+                badgesDiscriminadas += `<span class="badge bg-info text-white px-3 py-2 fs-6 shadow-sm"><i class="bi bi-credit-card-2-front-fill me-1"></i> ${qtdCartoes} Cartão(ões)</span> `;
+            }
 
             const listaEl = document.getElementById('lista-pendentes');
             listaEl.innerHTML = `
-                <li class="list-group-item d-flex flex-column gap-3 p-3 mb-2 rounded-3 border border-primary bg-primary bg-opacity-10">
+                <li class="list-group-item d-flex flex-column gap-3 p-3 mb-2 rounded-3 border border-primary bg-primary bg-opacity-10 shadow-sm">
                     <div>
-                        <strong class="d-block text-dark">Bloco ${bloco} - Apto ${apto}</strong>
-                        <small class="text-muted"><i class="bi bi-box-seam"></i> ${qtdPacotes} pacote(s) aguardando</small>
+                        <strong class="d-block text-dark fs-5 mb-2">Bloco ${bloco} - Apto ${apto}</strong>
+                        <div class="d-flex flex-wrap gap-2">
+                            ${badgesDiscriminadas}
+                        </div>
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-danger py-2 px-3 fw-bold shadow-sm w-50" style="border-radius: 8px;" onclick="cancelarPacote('${bloco}', '${apto}')">
