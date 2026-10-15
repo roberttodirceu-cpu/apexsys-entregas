@@ -317,6 +317,17 @@
             
             <!-- Seleção de Destino via Botões -->
             <div class="mb-4 pt-3 border-top">
+                <!-- SELETOR: PACOTE OU CARTÃO -->
+                <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">O que está chegando?</label>
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" id="btn-tipo-pacote" class="btn btn-primary fw-bold w-50 py-2 shadow-sm" onclick="selecionarTipoEntrega('pacote')">
+                        <i class="bi bi-box-seam me-1"></i> Pacote / Caixa
+                    </button>
+                    <button type="button" id="btn-tipo-cartao" class="btn btn-outline-primary fw-bold w-50 py-2 shadow-sm" onclick="selecionarTipoEntrega('cartao')">
+                        <i class="bi bi-credit-card-2-front me-1"></i> Cartão
+                    </button>
+                </div>
+
                 <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">1. Selecione o Bloco:</label>
                 <div id="grid-blocos" class="d-flex flex-wrap gap-2 mb-3"></div>
 
@@ -1041,10 +1052,17 @@
                     let codigoResumido = numeroDoPacote.length > 25 ? numeroDoPacote.substring(0, 10) + '...' + numeroDoPacote.substring(numeroDoPacote.length - 8) : numeroDoPacote;
                     
                     if(pacote.status === 'pendente') {
+                        let badgeTipo = pacote.tipo_encomenda === 'cartao' 
+                            ? '<span class="badge bg-info text-dark me-2"><i class="bi bi-credit-card-2-front-fill me-1"></i> Cartão</span>' 
+                            : '<span class="badge bg-warning text-dark me-2"><i class="bi bi-box-seam me-1"></i> Pacote</span>';
+
                         listaEl.innerHTML += `
                         <div class="apex-card border-warning p-3 bg-warning bg-opacity-10 shadow-sm border mb-3">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <span class="badge bg-warning text-dark"><i class="bi bi-box-seam me-1"></i> Aguardando Retirada</span>
+                                <div>
+                                    ${badgeTipo}
+                                    <span class="badge bg-light text-dark border">Na Portaria</span>
+                                </div>
                             </div>
                             
                             <div class="p-2 mb-2 rounded d-flex justify-content-between align-items-center" style="background: white; border: 1px dashed #fbbf24;">
@@ -1623,6 +1641,25 @@
         setTimeout(renderizarBlocos, 500);
 
         // ==========================================
+        // CONTROLE DO TIPO DE ENCOMENDA (PACOTE OU CARTÃO)
+        // ==========================================
+        let tipoEntregaSelecionado = 'pacote';
+
+        function selecionarTipoEntrega(tipo) {
+            tipoEntregaSelecionado = tipo;
+            const btnPacote = document.getElementById('btn-tipo-pacote');
+            const btnCartao = document.getElementById('btn-tipo-cartao');
+
+            if(tipo === 'cartao') {
+                btnCartao.className = "btn btn-info text-white fw-bold w-50 py-2 shadow-sm";
+                btnPacote.className = "btn btn-outline-secondary fw-bold w-50 py-2 shadow-sm";
+            } else {
+                btnPacote.className = "btn btn-primary fw-bold w-50 py-2 shadow-sm";
+                btnCartao.className = "btn btn-outline-secondary fw-bold w-50 py-2 shadow-sm";
+            }
+        }
+
+        // ==========================================
         // BANCO DE DADOS: SALVAR ENCOMENDA
         // ==========================================
         async function salvarEncomenda() {
@@ -1640,7 +1677,8 @@
                 condominio_id: meuCondominioId,
                 bloco: bloco,
                 apto: apto,
-                codigo_barras: codigo, // <--- O NOME EXATO DO SEU BANCO!
+                codigo_barras: codigo,
+                tipo_encomenda: tipoEntregaSelecionado, // <-- GRAVA SE É CARTÃO OU PACOTE!
                 status: 'pendente',
                 porteiro_recebeu_id: meuPerfilId
             }));
@@ -1654,6 +1692,7 @@
                 pacotesLidos = [];
                 document.getElementById('count-scan').innerText = '0';
                 document.getElementById('lista-codigos').value = '';
+                selecionarTipoEntrega('pacote'); // Volta para pacote como padrão
                 resetarSelecao();
                 navigate('screen-pendentes', document.querySelectorAll('.nav-item')[2]);
             }
