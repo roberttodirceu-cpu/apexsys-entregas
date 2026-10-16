@@ -274,17 +274,35 @@
             <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Resumo de Hoje</h5>
             <button class="btn btn-sm btn-light border text-muted shadow-sm" onclick="carregarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
         </div>
-        <div class="row text-center mb-4">
+        <div class="row text-center mb-4 g-2">
+            <!-- PACOTES PENDENTES -->
             <div class="col-6">
                 <div class="apex-card bg-warning text-dark border-0 shadow-sm py-3">
                     <h2 id="dash-pendentes" class="mb-0 fw-bold">0</h2>
-                    <small class="fw-bold">Pendentes</small>
+                    <small class="fw-bold text-uppercase" style="font-size: 0.75rem;">Pendentes</small>
                 </div>
             </div>
+            <!-- PACOTES ENTREGUES -->
             <div class="col-6">
                 <div class="apex-card bg-success text-white border-0 shadow-sm py-3">
                     <h2 id="dash-entregues" class="mb-0 fw-bold">0</h2>
-                    <small class="fw-bold">Entregues</small>
+                    <small class="fw-bold text-uppercase" style="font-size: 0.75rem;">Entregues</small>
+                </div>
+            </div>
+
+            <!-- NOVO KPI PREMIUM: TOTAL DE OCORRÊNCIAS -->
+            <div class="col-12 mt-2">
+                <div class="apex-card bg-danger text-white border-0 shadow-sm p-3 d-flex justify-content-between align-items-center" onclick="navigate('screen-ocorrencias')" style="cursor: pointer; border-radius: 14px;">
+                    <div class="text-start">
+                        <small class="fw-bold text-uppercase opacity-75" style="font-size: 0.7rem; letter-spacing: 0.5px;">Livro de Ocorrências</small>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <h2 id="dash-ocorrencias" class="mb-0 fw-bold" style="font-size: 2rem;">0</h2>
+                            <span class="small opacity-75">registradas</span>
+                        </div>
+                    </div>
+                    <div class="bg-white bg-opacity-25 p-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+                        <i class="bi bi-shield-exclamation fs-3"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1812,10 +1830,19 @@
 
             todosPendentes = encomendas.filter(e => e.status === 'pendente');
             const entregues = encomendas.filter(e => e.status === 'entregue');
-            historicoPortariaLocal = encomendas; // Salva para a lupa do auditor
+            historicoPortariaLocal = encomendas;
 
             document.getElementById('dash-pendentes').innerText = todosPendentes.length;
             document.getElementById('dash-entregues').innerText = entregues.length;
+
+            // NOVO: CONTA O TOTAL DE OCORRÊNCIAS REGISTRADAS
+            const { count: totalOc } = await supabaseClient
+                .from('ocorrencias')
+                .select('*', { count: 'exact', head: true })
+                .eq('condominio_id', meuCondominioId);
+
+            const elDashOc = document.getElementById('dash-ocorrencias');
+            if(elDashOc) elDashOc.innerText = totalOc || 0;
 
             pendentesPorBloco = {};
             todosPendentes.forEach(p => {
@@ -3606,10 +3633,15 @@
             aplicarTodosFiltrosOc();
         }
 
-        // 4. ATALHO DO BOTÃO "HOJE"
+        // 4. ATALHO DO BOTÃO "HOJE" (CORRIGIDO PARA O HORÁRIO DO BRASIL)
         function definirFiltroDataHoje() {
-            const hoje = new Date().toISOString().split('T')[0];
-            document.getElementById('filtro-data-oc').value = hoje;
+            const agora = new Date();
+            const ano = agora.getFullYear();
+            const mes = String(agora.getMonth() + 1).padStart(2, '0');
+            const dia = String(agora.getDate()).padStart(2, '0');
+            const hojeLocal = `${ano}-${mes}-${dia}`; // Pega o dia exato do seu aparelho
+
+            document.getElementById('filtro-data-oc').value = hojeLocal;
             aplicarTodosFiltrosOc();
         }
 
@@ -3625,7 +3657,7 @@
             aplicarTodosFiltrosOc();
         }
 
-        // 6. FILTRO COMBINADO INTELIGENTE
+        // 6. FILTRO COMBINADO INTELIGENTE (COM FUSO CORRIGIDO)
         function aplicarTodosFiltrosOc() {
             const termo = document.getElementById('busca-ocorrencia-sindico').value.toLowerCase().trim();
             const dataFiltro = document.getElementById('filtro-data-oc').value; // Formato AAAA-MM-DD
@@ -3635,17 +3667,22 @@
                 let textoCompleto = `${oc.bloco || ''} ${oc.apto || ''} ${oc.relato || ''} ${oc.nome_registrador || ''}`.toLowerCase();
                 let bateuTexto = (!termo || textoCompleto.includes(termo));
 
-                // Filtro 2: Calendário
+                // Filtro 2: Calendário corrigido para o horário local
                 let bateuData = true;
                 if (dataFiltro) {
-                    let dataCriacaoISO = new Date(oc.created_at).toISOString().split('T')[0];
-                    bateuData = (dataCriacaoISO === dataFiltro);
+                    let d = new Date(oc.created_at);
+                    let ano = d.getFullYear();
+                    let mes = String(d.getMonth() + 1).padStart(2, '0');
+                    let dia = String(d.getDate()).padStart(2, '0');
+                    let dataCriacaoLocal = `${ano}-${mes}-${dia}`;
+
+                    bateuData = (dataCriacaoLocal === dataFiltro);
                 }
 
                 // Filtro 3: Bloco
                 let bateuBloco = true;
                 if (filtroBlocoAtivoOc === 'GERAL') {
-                    bateuBloco = (!oc.bloco && !oc.apto); // Ocorrência sem apto
+                    bateuBloco = (!oc.bloco && !oc.apto); // Ocorrência de área comum
                 } else if (filtroBlocoAtivoOc !== 'TODOS') {
                     bateuBloco = (oc.bloco === filtroBlocoAtivoOc);
                 }
