@@ -407,7 +407,8 @@
             </ul>
         </div>
     </div>
-    
+
+
     <!-- ========================================== -->
     <!-- TELA EXTRA: LIVRO DE OCORRÊNCIAS -->
     <!-- ========================================== -->
@@ -470,14 +471,52 @@
             </div>
         </div>
 
-        <!-- LISTA DE OCORRÊNCIAS FOI MOVIDA PARA CÁ -->
+        <!-- HISTÓRICO DE OCORRÊNCIAS COM FILTROS PREMIUM -->
         <h6 class="fw-bold text-muted mt-5 mb-2"><i class="bi bi-shield-exclamation me-1"></i> Histórico de Ocorrências</h6>
         <div class="apex-card border-danger p-3 bg-white shadow-sm mb-5">
+            
+            <!-- 1. CAMPO DE DIGITAÇÃO + BOTÃO DE LIMPAR -->
             <div class="input-group mb-3 shadow-sm">
                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-                <input type="text" id="busca-ocorrencia-sindico" class="form-control border-start-0 ps-0 bg-light" placeholder="Pesquisar por apto, relato ou data..." onkeyup="filtrarOcorrenciasSindico()">
+                <input type="text" id="busca-ocorrencia-sindico" class="form-control border-start-0 ps-0 bg-light" placeholder="Buscar palavra-chave..." onkeyup="aplicarTodosFiltrosOc()">
+                <button class="btn btn-outline-secondary fw-bold" type="button" onclick="limparFiltrosOcorrencia()" title="Limpar todos os filtros">
+                    <i class="bi bi-x-circle"></i>
+                </button>
             </div>
-            <div id="lista-ocorrencias-sindico" class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+
+            <!-- 2. FILTRO POR DATA (CALENDÁRIO + ATALHO HOJE) -->
+            <div class="row g-2 align-items-center mb-3 p-2 bg-light rounded-3 border">
+                <div class="col-7">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-white"><i class="bi bi-calendar-event text-danger"></i></span>
+                        <input type="date" id="filtro-data-oc" class="form-control form-control-sm" onchange="aplicarTodosFiltrosOc()">
+                    </div>
+                </div>
+                <div class="col-5 d-flex gap-1">
+                    <button type="button" class="btn btn-sm btn-outline-danger fw-bold w-100" onclick="definirFiltroDataHoje()">Hoje</button>
+                </div>
+            </div>
+
+            <!-- 3. CARROSSEL DE BLOCOS (PÍLULAS DESLIZANTES COM O DEDO) -->
+            <label class="fw-bold text-muted small mb-1 d-block">Filtrar por Bloco:</label>
+            <div id="grid-filtro-blocos-oc" class="d-flex gap-2 overflow-auto pb-2 mb-2" style="white-space: nowrap; -webkit-overflow-scrolling: touch;">
+                <span class="badge rounded-pill bg-danger px-3 py-2 fs-6 shadow-sm cursor-pointer" onclick="selecionarFiltroBlocoOc('TODOS', this)">Todos</span>
+                <span class="badge rounded-pill bg-light text-dark border px-3 py-2 fs-6 cursor-pointer" onclick="selecionarFiltroBlocoOc('GERAL', this)">Área Comum</span>
+            </div>
+
+            <!-- 4. CARROSSEL DE APARTAMENTOS (SÓ APARECE QUANDO ESCOLHE O BLOCO) -->
+            <div id="container-filtro-aptos-oc" class="d-none mb-3">
+                <label class="fw-bold text-muted small mb-1 d-block">Apartamento (Bloco <span id="lbl-filtro-bloco-ativo"></span>):</label>
+                <div id="grid-filtro-aptos-oc" class="d-flex gap-2 overflow-auto pb-2" style="white-space: nowrap; -webkit-overflow-scrolling: touch;"></div>
+            </div>
+
+            <!-- CONTADOR DE RESULTADOS -->
+            <div class="d-flex justify-content-between align-items-center mb-2 pt-2 border-top">
+                <small class="text-muted fw-bold">Registros encontrados: <span id="cont-ocorrencias-filtradas" class="text-danger">0</span></small>
+            </div>
+
+            <!-- LISTA REAL DAS OCORRÊNCIAS -->
+            <div id="lista-ocorrencias-sindico" class="d-flex flex-column gap-3" style="max-height: 450px; overflow-y: auto; padding-right: 5px;">
                 <span class="text-muted small">Carregando ocorrências...</span>
             </div>
         </div>
@@ -3451,7 +3490,8 @@
             }
 
             ocorrenciasMemoria = ocs;
-            renderizarOcorrencias(ocorrenciasMemoria);
+            renderizarBotoesFiltroBlocosOc(); // <-- Adicione esta linha
+            aplicarTodosFiltrosOc();          // <-- E troque renderizarOcorrencias por esta
         }
 
         function renderizarOcorrencias(lista) {
@@ -3497,12 +3537,132 @@
             });
         }
 
-        function filtrarOcorrenciasSindico() {
-            const termo = document.getElementById('busca-ocorrencia-sindico').value.toLowerCase();
-            const filtrados = ocorrenciasMemoria.filter(oc => {
-                let txtBusca = `${oc.bloco || ''} ${oc.apto || ''} ${oc.relato} ${oc.nome_registrador || ''} ${new Date(oc.created_at).toLocaleDateString('pt-BR')}`.toLowerCase();
-                return txtBusca.includes(termo);
+        // ==========================================
+        // MOTOR PREMIUM DE FILTROS DAS OCORRÊNCIAS
+        // ==========================================
+        let filtroBlocoAtivoOc = 'TODOS';
+        let filtroAptoAtivoOc = 'TODOS';
+
+        // 1. GERA OS BOTÕES DE BLOCOS (PÍLULAS)
+        function renderizarBotoesFiltroBlocosOc() {
+            const container = document.getElementById('grid-filtro-blocos-oc');
+            if(!container) return;
+
+            let html = `
+                <span class="badge rounded-pill ${filtroBlocoAtivoOc === 'TODOS' ? 'bg-danger text-white' : 'bg-light text-dark border'} px-3 py-2 fs-6 shadow-sm" style="cursor: pointer;" onclick="selecionarFiltroBlocoOc('TODOS', this)">Todos</span>
+                <span class="badge rounded-pill ${filtroBlocoAtivoOc === 'GERAL' ? 'bg-danger text-white' : 'bg-light text-dark border'} px-3 py-2 fs-6 shadow-sm" style="cursor: pointer;" onclick="selecionarFiltroBlocoOc('GERAL', this)">Área Comum</span>
+            `;
+
+            if (typeof aptosAgrupadosPin !== 'undefined' && Object.keys(aptosAgrupadosPin).length > 0) {
+                const blocosOrd = Object.keys(aptosAgrupadosPin).sort((a,b) => (isNaN(parseInt(a)) ? a.localeCompare(b) : parseInt(a)-parseInt(b)));
+                blocosOrd.forEach(b => {
+                    let classeAtiva = (filtroBlocoAtivoOc === b) ? 'bg-danger text-white' : 'bg-light text-dark border';
+                    html += `<span class="badge rounded-pill ${classeAtiva} px-3 py-2 fs-6 shadow-sm" style="cursor: pointer;" onclick="selecionarFiltroBlocoOc('${b}', this)">Bl ${b}</span>`;
+                });
+            }
+            container.innerHTML = html;
+        }
+
+        // 2. QUANDO TOCA EM UM BLOCO
+        function selecionarFiltroBlocoOc(bloco, el) {
+            filtroBlocoAtivoOc = bloco;
+            filtroAptoAtivoOc = 'TODOS';
+
+            document.querySelectorAll('#grid-filtro-blocos-oc .badge').forEach(b => {
+                b.className = 'badge rounded-pill bg-light text-dark border px-3 py-2 fs-6 shadow-sm';
             });
+            if(el) el.className = 'badge rounded-pill bg-danger text-white px-3 py-2 fs-6 shadow-sm';
+
+            const containerAptos = document.getElementById('container-filtro-aptos-oc');
+            const gridAptos = document.getElementById('grid-filtro-aptos-oc');
+
+            // Se escolheu um bloco específico, desenha as pílulas dos apartamentos dele
+            if (bloco !== 'TODOS' && bloco !== 'GERAL' && typeof aptosAgrupadosPin !== 'undefined' && aptosAgrupadosPin[bloco]) {
+                document.getElementById('lbl-filtro-bloco-ativo').innerText = bloco;
+                containerAptos.classList.remove('d-none');
+
+                let aptosHtml = `<span class="badge rounded-pill bg-danger text-white px-3 py-2 fs-6 shadow-sm" style="cursor: pointer;" onclick="selecionarFiltroAptoOc('TODOS', this)">Todos do Bloco</span>`;
+                
+                const aptosOrd = aptosAgrupadosPin[bloco].sort((a,b) => (isNaN(parseInt(a.numero)) ? a.numero.localeCompare(b.numero) : parseInt(a.numero)-parseInt(b.numero)));
+                aptosOrd.forEach(ap => {
+                    aptosHtml += `<span class="badge rounded-pill bg-light text-dark border px-3 py-2 fs-6 shadow-sm" style="cursor: pointer;" onclick="selecionarFiltroAptoOc('${ap.numero}', this)">${ap.numero}</span>`;
+                });
+                gridAptos.innerHTML = aptosHtml;
+            } else {
+                containerAptos.classList.add('d-none');
+            }
+
+            aplicarTodosFiltrosOc();
+        }
+
+        // 3. QUANDO TOCA EM UM APARTAMENTO
+        function selecionarFiltroAptoOc(apto, el) {
+            filtroAptoAtivoOc = apto;
+            document.querySelectorAll('#grid-filtro-aptos-oc .badge').forEach(b => {
+                b.className = 'badge rounded-pill bg-light text-dark border px-3 py-2 fs-6 shadow-sm';
+            });
+            if(el) el.className = 'badge rounded-pill bg-danger text-white px-3 py-2 fs-6 shadow-sm';
+
+            aplicarTodosFiltrosOc();
+        }
+
+        // 4. ATALHO DO BOTÃO "HOJE"
+        function definirFiltroDataHoje() {
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('filtro-data-oc').value = hoje;
+            aplicarTodosFiltrosOc();
+        }
+
+        // 5. BOTÃO DE LIMPAR TUDO
+        function limparFiltrosOcorrencia() {
+            document.getElementById('busca-ocorrencia-sindico').value = '';
+            document.getElementById('filtro-data-oc').value = '';
+            filtroBlocoAtivoOc = 'TODOS';
+            filtroAptoAtivoOc = 'TODOS';
+            
+            document.getElementById('container-filtro-aptos-oc').classList.add('d-none');
+            renderizarBotoesFiltroBlocosOc();
+            aplicarTodosFiltrosOc();
+        }
+
+        // 6. FILTRO COMBINADO INTELIGENTE
+        function aplicarTodosFiltrosOc() {
+            const termo = document.getElementById('busca-ocorrencia-sindico').value.toLowerCase().trim();
+            const dataFiltro = document.getElementById('filtro-data-oc').value; // Formato AAAA-MM-DD
+
+            const filtrados = ocorrenciasMemoria.filter(oc => {
+                // Filtro 1: Texto digitado
+                let textoCompleto = `${oc.bloco || ''} ${oc.apto || ''} ${oc.relato || ''} ${oc.nome_registrador || ''}`.toLowerCase();
+                let bateuTexto = (!termo || textoCompleto.includes(termo));
+
+                // Filtro 2: Calendário
+                let bateuData = true;
+                if (dataFiltro) {
+                    let dataCriacaoISO = new Date(oc.created_at).toISOString().split('T')[0];
+                    bateuData = (dataCriacaoISO === dataFiltro);
+                }
+
+                // Filtro 3: Bloco
+                let bateuBloco = true;
+                if (filtroBlocoAtivoOc === 'GERAL') {
+                    bateuBloco = (!oc.bloco && !oc.apto); // Ocorrência sem apto
+                } else if (filtroBlocoAtivoOc !== 'TODOS') {
+                    bateuBloco = (oc.bloco === filtroBlocoAtivoOc);
+                }
+
+                // Filtro 4: Apartamento
+                let bateuApto = true;
+                if (filtroAptoAtivoOc !== 'TODOS') {
+                    bateuApto = (oc.apto === filtroAptoAtivoOc);
+                }
+
+                return bateuTexto && bateuData && bateuBloco && bateuApto;
+            });
+
+            // Atualiza o contador na tela
+            const contadorEl = document.getElementById('cont-ocorrencias-filtradas');
+            if(contadorEl) contadorEl.innerText = filtrados.length;
+
             renderizarOcorrencias(filtrados);
         }
     </script>
