@@ -271,39 +271,52 @@
     <!-- TELA 2: DASHBOARD -->
     <div id="screen-dashboard" class="app-screen container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Resumo de Hoje</h5>
-            <button class="btn btn-sm btn-light border text-muted shadow-sm" onclick="carregarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);">Resumo de Encomendas</h5>
+            <button class="btn btn-sm btn-light border text-muted" onclick="carregarDados()"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
         </div>
-        <div class="row text-center mb-4 g-2">
-            <!-- PACOTES PENDENTES -->
+        <div class="row text-center mb-4">
             <div class="col-6">
-                <div class="apex-card bg-warning text-dark border-0 shadow-sm py-3">
+                <div class="apex-card bg-warning text-dark border-0 shadow-sm">
                     <h2 id="dash-pendentes" class="mb-0 fw-bold">0</h2>
-                    <small class="fw-bold text-uppercase" style="font-size: 0.75rem;">Pendentes</small>
+                    <small class="fw-bold">Pendentes</small>
                 </div>
             </div>
-            <!-- PACOTES ENTREGUES -->
             <div class="col-6">
-                <div class="apex-card bg-success text-white border-0 shadow-sm py-3">
+                <div class="apex-card bg-success text-white border-0 shadow-sm">
                     <h2 id="dash-entregues" class="mb-0 fw-bold">0</h2>
-                    <small class="fw-bold text-uppercase" style="font-size: 0.75rem;">Entregues</small>
+                    <small class="fw-bold">Entregues</small>
                 </div>
+            </div>
+        </div>
+
+        <h5 class="fw-bold mb-3" style="color: var(--apex-brand);">Controle de Portaria</h5>
+        <div class="d-flex flex-column gap-3">
+            <!-- BOTÃO GIGANTE DE VISITANTES -->
+            <div class="apex-card p-3 d-flex align-items-center justify-content-between border-start border-5 border-primary shadow-sm" style="cursor: pointer;" onclick="navigate('screen-visitantes')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
+                        <i class="bi bi-person-bounding-box fs-3"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold text-dark m-0">Visitantes e Prestadores</h6>
+                        <small class="text-muted">Registrar entrada com foto e controlar saída</small>
+                    </div>
+                </div>
+                <i class="bi bi-chevron-right text-muted fs-5"></i>
             </div>
 
-            <!-- NOVO KPI PREMIUM: TOTAL DE OCORRÊNCIAS -->
-            <div class="col-12 mt-2">
-                <div class="apex-card bg-danger text-white border-0 shadow-sm p-3 d-flex justify-content-between align-items-center" onclick="navigate('screen-ocorrencias')" style="cursor: pointer; border-radius: 14px;">
-                    <div class="text-start">
-                        <small class="fw-bold text-uppercase opacity-75" style="font-size: 0.7rem; letter-spacing: 0.5px;">Livro de Ocorrências</small>
-                        <div class="d-flex align-items-baseline gap-2">
-                            <h2 id="dash-ocorrencias" class="mb-0 fw-bold" style="font-size: 2rem;">0</h2>
-                            <span class="small opacity-75">registradas</span>
-                        </div>
-                    </div>
-                    <div class="bg-white bg-opacity-25 p-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px;">
+            <!-- BOTÃO GIGANTE DE OCORRÊNCIAS -->
+            <div class="apex-card p-3 d-flex align-items-center justify-content-between border-start border-5 border-danger shadow-sm" style="cursor: pointer;" onclick="navigate('screen-ocorrencias')">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger">
                         <i class="bi bi-shield-exclamation fs-3"></i>
                     </div>
+                    <div>
+                        <h6 class="fw-bold text-dark m-0">Livro de Ocorrências</h6>
+                        <small class="text-muted">Relatar problemas para o Síndico</small>
+                    </div>
                 </div>
+                <i class="bi bi-chevron-right text-muted fs-5"></i>
             </div>
         </div>
 
@@ -539,6 +552,182 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Correção para a letra ficar sempre BRANCA quando o botão de Bloco/Apto for selecionado -->
+    <style>
+        .btn-selecao.active { color: #ffffff !important; }
+    </style>
+
+    <!-- ========================================== -->
+    <!-- TELA EXTRA 2: CONTROLE DE VISITANTES -->
+    <!-- ========================================== -->
+    <div id="screen-visitantes" class="app-screen container mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold m-0" style="color: var(--apex-brand);"><i class="bi bi-person-badge me-2"></i>Acesso de Visitantes</h5>
+            <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="navigate('screen-dashboard', document.querySelectorAll('.nav-item')[0])">Voltar</button>
+        </div>
+
+        <!-- 3 ABAS: NOVA ENTRADA | NO PRÉDIO | HISTÓRICO & PDF -->
+        <div class="morador-tabs shadow-sm mb-4">
+            <div class="morador-tab active" onclick="trocarAbaVisitante('aba-vis-novo', this)"><i class="bi bi-plus-circle me-1"></i> Entrada</div>
+            <div class="morador-tab" onclick="trocarAbaVisitante('aba-vis-ativos', this); carregarVisitantesAtivos();"><i class="bi bi-building-check me-1"></i> No Prédio (<span id="count-vis-ativos">0</span>)</div>
+            <div class="morador-tab" onclick="trocarAbaVisitante('aba-vis-historico', this); carregarHistoricoVisitantes();"><i class="bi bi-file-earmark-bar-graph me-1"></i> Histórico</div>
+        </div>
+
+        <!-- ABA 1: NOVA ENTRADA -->
+        <div id="aba-vis-novo" class="tab-content active">
+            <div class="apex-card mb-4">
+
+                <!-- ALERTA DE VISITANTE RECORRENTE ENCONTRADO -->
+                <div id="alerta-vis-recorrente" class="alert bg-success bg-opacity-10 border border-success text-success rounded-3 py-2 px-3 mb-3 d-none small fw-bold">
+                    <i class="bi bi-stars me-1"></i> Visitante recorrente localizado! Dados e última foto carregados automaticamente.
+                </div>
+                
+                <!-- CÂMERA DE ROSTO AO VIVO / FOTO CARREGADA -->
+                <div class="text-center mb-4 p-3 border rounded-4 bg-light">
+                    <div id="vis-box-video" class="d-none mb-2">
+                        <video id="vis-video" style="width: 100%; max-width: 300px; height: 250px; object-fit: cover; border-radius: 12px; border: 2px solid var(--apex-brand);" autoplay playsinline></video>
+                        <button type="button" class="btn btn-success w-100 fw-bold mt-2 py-2 shadow-sm" style="max-width: 300px;" onclick="baterFotoVisitante()"><i class="bi bi-camera"></i> Capturar Rosto</button>
+                    </div>
+
+                    <div id="vis-box-foto" class="d-none mb-2 position-relative d-inline-block">
+                        <img id="vis-img-preview" src="" style="width: 180px; height: 180px; object-fit: cover; border-radius: 50%; border: 4px solid #10b981; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <button type="button" class="btn btn-sm btn-danger position-absolute bottom-0 end-0 rounded-circle p-2 shadow" title="Tirar nova foto e substituir" onclick="abrirCameraVisitante()"><i class="bi bi-camera-fill fs-6"></i></button>
+                        <small class="d-block text-muted mt-2" id="lbl-status-foto-vis">Foto pronta (toque no botão vermelho se quiser tirar outra)</small>
+                    </div>
+
+                    <button type="button" id="btn-ligar-cam-vis" class="btn btn-outline-primary w-100 py-3 fw-bold bg-white shadow-sm rounded-3" onclick="abrirCameraVisitante()">
+                        <i class="bi bi-camera-video-fill fs-4 d-block mb-1"></i> Ligar Câmera / Webcam
+                    </button>
+                </div>
+
+                <!-- DADOS DO VISITANTE (DOCUMENTO EM PRIMEIRO PARA PUXAR CADASTRO AUTOMÁTICO) -->
+                <div class="row g-2 mb-3">
+                    <div class="col-12">
+                        <label class="fw-bold text-primary small"><i class="bi bi-person-vcard me-1"></i>RG ou CPF (Digite para buscar cadastro automático)</label>
+                        <div class="input-group">
+                            <input type="text" id="vis-doc" class="form-control fw-bold" placeholder="Digite o RG ou CPF..." onkeyup="agendarBuscaVisitanteRecorrente()" onblur="buscarVisitantePorDocumento()">
+                            <button class="btn btn-outline-primary fw-bold" type="button" onclick="buscarVisitantePorDocumento()" title="Buscar cadastro"><i class="bi bi-search"></i></button>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="fw-bold text-muted small">Nome Completo *</label>
+                        <input type="text" id="vis-nome" class="form-control" placeholder="Ex: Carlos Eduardo">
+                    </div>
+                    <div class="col-6">
+                        <label class="fw-bold text-muted small">Tipo de Acesso</label>
+                        <select id="vis-tipo" class="form-select fw-bold" onchange="document.getElementById('box-vis-empresa').classList.toggle('d-none', this.value === 'Visitante')">
+                            <option value="Visitante">Visitante (Familiar/Amigo)</option>
+                            <option value="Prestador">Prestador de Serviço</option>
+                            <option value="Entregador">Delivery / Correios</option>
+                            <option value="Corretor">Corretor de Imóveis</option>
+                        </select>
+                    </div>
+                    <div class="col-6 d-none" id="box-vis-empresa">
+                        <label class="fw-bold text-muted small">Empresa (Opcional)</label>
+                        <input type="text" id="vis-empresa" class="form-control" placeholder="Ex: Claro, iFood...">
+                    </div>
+                </div>
+
+                <!-- DESTINO (BLOCO E APTO) -->
+                <div class="p-3 border rounded-3 bg-light mb-3 shadow-sm">
+                    <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">1. Selecione o Bloco (ou Área Comum):</label>
+                    <div id="grid-blocos-vis" class="d-flex flex-wrap gap-2 mb-3"></div>
+
+                    <div id="container-aptos-vis" class="d-none">
+                        <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">2. Selecione o Apto (Bloco <span id="lbl-bloco-vis"></span>):</label>
+                        <div id="grid-aptos-vis" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+
+                <!-- DADOS DO VEÍCULO (PREENCHE SOZINHO SE FOR RECORRENTE, MAS PODE ALTERAR) -->
+                <div class="p-3 border rounded-3 bg-light mb-3 shadow-sm">
+                    <label class="fw-bold text-dark mb-2" style="font-size: 0.85rem;"><i class="bi bi-car-front-fill text-primary me-1"></i> Dados do Veículo (Opcional):</label>
+                    <div class="row g-2">
+                        <div class="col-5">
+                            <input type="text" id="vis-veiculo-modelo" class="form-control form-control-sm fw-bold" placeholder="Marca/Modelo (Ex: Gol)">
+                        </div>
+                        <div class="col-3">
+                            <input type="text" id="vis-veiculo-cor" class="form-control form-control-sm" placeholder="Cor (Prata)">
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="vis-veiculo-placa" class="form-control form-control-sm fw-bold text-uppercase" placeholder="Placa (ABC1D23)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CAMPO DE OBSERVAÇÕES GERAIS MANTIDO -->
+                <div class="mb-4">
+                    <label class="fw-bold text-muted mb-2" style="font-size: 0.85rem;">Observações Gerais (Opcional):</label>
+                    <textarea id="vis-obs" class="form-control bg-light shadow-sm" rows="2" placeholder="Ex: Subiu com maleta de ferramentas, autorizado pelo morador..."></textarea>
+                </div>
+
+                <button id="btn-salvar-vis" class="btn btn-apex bg-success border-0 w-100 py-3 fs-5 fw-bold shadow" onclick="salvarEntradaVisitante()">
+                    <i class="bi bi-check2-circle me-1"></i> Liberar Entrada
+                </button>
+            </div>
+        </div>
+
+        <!-- ABA 2: VISITANTES DENTRO DO PRÉDIO AGORA -->
+        <div id="aba-vis-ativos" class="tab-content">
+            <div id="lista-vis-ativos" class="d-flex flex-column gap-3">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+
+        <!-- ABA 3: HISTÓRICO COMPLETO E EMISSÃO DE RELATÓRIO PROFISSIONAL -->
+        <div id="aba-vis-historico" class="tab-content">
+            <div class="apex-card mb-4">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                    <h6 class="fw-bold text-dark m-0"><i class="bi bi-funnel me-1"></i> Filtros e Exportação</h6>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-danger fw-bold shadow-sm" onclick="exportarRelatorioVisitantesPDF()">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i> Emitir PDF
+                        </button>
+                        <button class="btn btn-sm btn-success fw-bold shadow-sm" onclick="exportarRelatorioVisitantesCSV()">
+                            <i class="bi bi-file-earmark-excel-fill me-1"></i> Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-12">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                            <input type="text" id="filtro-vis-busca" class="form-control" placeholder="Buscar por nome, documento, placa, empresa ou apto..." onkeyup="filtrarHistoricoVisitantes()">
+                            <button class="btn btn-outline-secondary" type="button" onclick="limparFiltrosHistoricoVis()"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <label class="small text-muted fw-bold" style="font-size: 0.7rem;">De:</label>
+                        <input type="date" id="filtro-vis-data-ini" class="form-control form-control-sm" onchange="filtrarHistoricoVisitantes()">
+                    </div>
+                    <div class="col-4">
+                        <label class="small text-muted fw-bold" style="font-size: 0.7rem;">Até:</label>
+                        <input type="date" id="filtro-vis-data-fim" class="form-control form-control-sm" onchange="filtrarHistoricoVisitantes()">
+                    </div>
+                    <div class="col-4">
+                        <label class="small text-muted fw-bold" style="font-size: 0.7rem;">Tipo:</label>
+                        <select id="filtro-vis-tipo" class="form-select form-select-sm" onchange="filtrarHistoricoVisitantes()">
+                            <option value="TODOS">Todos</option>
+                            <option value="Visitante">Visitante</option>
+                            <option value="Prestador">Prestador</option>
+                            <option value="Entregador">Delivery</option>
+                            <option value="Corretor">Corretor</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2 pt-2 border-top">
+                    <small class="text-muted fw-bold">Total listado: <span id="lbl-total-hist-vis" class="text-primary">0</span> acesso(s)</small>
+                </div>
+
+                <div id="lista-vis-historico" class="d-flex flex-column gap-3" style="max-height: 500px; overflow-y: auto;">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- TELA 5: GESTÃO DE APARTAMENTOS E PINs (COM BOTÕES DE PESQUISA) -->
@@ -951,20 +1140,26 @@
                 document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
                 navElement.classList.add('active');
             }
+
+            // Desliga a câmera de visitantes se sair da tela dela
+            if(screenId !== 'screen-visitantes' && typeof pararCameraVisitante === 'function') {
+                pararCameraVisitante();
+            }
             
             // Agora o app sabe que precisa carregar dados específicos de cada tela!
             if(screenId === 'screen-dashboard' || screenId === 'screen-pendentes') carregarDados();
             if(screenId === 'screen-aptos') carregarAptos();
             if(screenId === 'screen-historico') carregarHistoricoPortaria(); 
             if(screenId === 'screen-checkin') carregarEventosHoje();
-            
-            // A LINHA NOVA: CARREGA A LISTA QUANDO ABRE A TELA DE OCORRÊNCIA
             if(screenId === 'screen-ocorrencias') carregarOcorrenciasSindico();
+
+            // ✅ A LINHA QUE FALTAVA: Carrega os botões de Bloco e Apto ao abrir Visitantes!
+            if(screenId === 'screen-visitantes') iniciarTelaVisitantes();
 
             if(screenId === 'screen-sindico') {
                 carregarEspacosSindico();
             }
-        } // <--- ESSA É A CHAVE QUE FECHA A FUNÇÃO NAVIGATE.
+        }
 
         function toggleAppShell(show) {
             if(show) {
@@ -3701,6 +3896,510 @@
             if(contadorEl) contadorEl.innerText = filtrados.length;
 
             renderizarOcorrencias(filtrados);
+        }
+
+        // ==========================================
+        // MÓDULO DE VISITANTES E PRESTADORES (COM VEÍCULO, AUTO-PREENCHIMENTO E PDF)
+        // ==========================================
+        let blocoVis = ''; let aptoVis = '';
+        let fotoVisitanteBase64 = null;
+        let streamCamVisitante = null;
+        let timerBuscaVis = null;
+        let historicoVisitantesMemoria = [];
+        let listaVisitantesFiltradaAtual = [];
+
+        function trocarAbaVisitante(abaId, el) {
+            document.querySelectorAll('#screen-visitantes .morador-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#screen-visitantes .tab-content').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById(abaId).classList.add('active');
+            if(abaId !== 'aba-vis-novo') pararCameraVisitante();
+        }
+
+        // 1. RECONHECIMENTO AUTOMÁTICO POR DOCUMENTO (TRAZ DADOS, VEÍCULO E FOTO)
+        function agendarBuscaVisitanteRecorrente() {
+            clearTimeout(timerBuscaVis);
+            const doc = document.getElementById('vis-doc').value.trim();
+            if (doc.length >= 5) {
+                timerBuscaVis = setTimeout(() => buscarVisitantePorDocumento(), 600);
+            } else {
+                document.getElementById('alerta-vis-recorrente').classList.add('d-none');
+            }
+        }
+
+        async function buscarVisitantePorDocumento() {
+            const docInput = document.getElementById('vis-doc').value.trim();
+            if (!docInput || docInput.length < 4 || !meuCondominioId) return;
+
+            const docLimpo = docInput.replace(/\D/g, '');
+
+            const { data: visitasAnteriores } = await supabaseClient
+                .from('visitantes')
+                .select('*')
+                .eq('condominio_id', meuCondominioId)
+                .not('documento', 'is', null)
+                .order('data_entrada', { ascending: false })
+                .limit(200);
+
+            if (!visitasAnteriores || visitasAnteriores.length === 0) return;
+
+            const ultimoRegistro = visitasAnteriores.find(v => {
+                if (!v.documento) return false;
+                const dBancoLimpo = v.documento.replace(/\D/g, '');
+                return v.documento.toLowerCase() === docInput.toLowerCase() || (docLimpo.length >= 4 && dBancoLimpo === docLimpo);
+            });
+
+            if (ultimoRegistro) {
+                // Preenche Dados Pessoais
+                document.getElementById('vis-nome').value = ultimoRegistro.nome || '';
+                document.getElementById('vis-tipo').value = ultimoRegistro.tipo || 'Visitante';
+                document.getElementById('box-vis-empresa').classList.toggle('d-none', ultimoRegistro.tipo === 'Visitante');
+                document.getElementById('vis-empresa').value = ultimoRegistro.empresa || '';
+
+                // Preenche Veículo da última visita (mas permite que o porteiro altere ou apague!)
+                document.getElementById('vis-veiculo-modelo').value = ultimoRegistro.veiculo_modelo || '';
+                document.getElementById('vis-veiculo-cor').value = ultimoRegistro.veiculo_cor || '';
+                document.getElementById('vis-veiculo-placa').value = ultimoRegistro.veiculo_placa || '';
+
+                // Preenche Foto da última visita (podendo tirar outra se quiser)
+                if (ultimoRegistro.foto_url) {
+                    fotoVisitanteBase64 = ultimoRegistro.foto_url;
+                    pararCameraVisitante();
+                    document.getElementById('vis-img-preview').src = fotoVisitanteBase64;
+                    document.getElementById('btn-ligar-cam-vis').classList.add('d-none');
+                    document.getElementById('vis-box-foto').classList.remove('d-none');
+                    document.getElementById('lbl-status-foto-vis').innerText = "Foto da última visita carregada (toque no botão vermelho se quiser tirar outra)";
+                }
+
+                document.getElementById('alerta-vis-recorrente').classList.remove('d-none');
+            }
+        }
+
+        // 2. LIGA A WEBCAM DO PC OU CÂMERA DO CELULAR
+        async function abrirCameraVisitante() {
+            document.getElementById('btn-ligar-cam-vis').classList.add('d-none');
+            document.getElementById('vis-box-foto').classList.add('d-none');
+            document.getElementById('vis-box-video').classList.remove('d-none');
+
+            const video = document.getElementById('vis-video');
+            try {
+                streamCamVisitante = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = streamCamVisitante;
+            } catch (err) {
+                try {
+                    streamCamVisitante = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = streamCamVisitante;
+                } catch (e) {
+                    alert("Não foi possível acessar a câmera. Verifique as permissões.");
+                    pararCameraVisitante();
+                    document.getElementById('btn-ligar-cam-vis').classList.remove('d-none');
+                }
+            }
+        }
+
+        // 3. CONGELA A IMAGEM E SUBSTITUI A FOTO
+        function baterFotoVisitante() {
+            const video = document.getElementById('vis-video');
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 400;
+            
+            const ctx = canvas.getContext('2d');
+            let tamanho = Math.min(video.videoWidth, video.videoHeight);
+            let startX = (video.videoWidth - tamanho) / 2;
+            let startY = (video.videoHeight - tamanho) / 2;
+            
+            ctx.drawImage(video, startX, startY, tamanho, tamanho, 0, 0, 400, 400);
+            
+            fotoVisitanteBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            document.getElementById('vis-img-preview').src = fotoVisitanteBase64;
+            document.getElementById('lbl-status-foto-vis').innerText = "Nova foto capturada com sucesso!";
+            pararCameraVisitante();
+            document.getElementById('vis-box-foto').classList.remove('d-none');
+        }
+
+        function pararCameraVisitante() {
+            document.getElementById('vis-box-video').classList.add('d-none');
+            if (streamCamVisitante) {
+                streamCamVisitante.getTracks().forEach(t => t.stop());
+                streamCamVisitante = null;
+            }
+        }
+
+        // 4. RENDERIZA OS BOTÕES DE BLOCO E APTO AUTOMATICAMENTE
+        async function iniciarTelaVisitantes() {
+            await renderizarBlocosVis();
+            carregarVisitantesAtivos();
+        }
+
+        async function renderizarBlocosVis() {
+            const grid = document.getElementById('grid-blocos-vis');
+            if (!grid) return;
+            grid.innerHTML = '<span class="text-muted small">Carregando blocos...</span>';
+
+            if (Object.keys(aptosAgrupadosPin).length === 0) {
+                await carregarAptosSilencioso();
+            }
+
+            grid.innerHTML = '';
+            grid.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarAreaComumVis(this)">🏢 Área Comum</div>`;
+
+            const blocosOrd = Object.keys(aptosAgrupadosPin).sort((a,b) => (isNaN(parseInt(a)) ? a.localeCompare(b) : parseInt(a)-parseInt(b)));
+            blocosOrd.forEach(b => { 
+                grid.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarBlocoVis('${b}', this)">${b}</div>`; 
+            });
+        }
+
+        function selecionarAreaComumVis(el) {
+            blocoVis = 'Condomínio';
+            aptoVis = 'Área Comum';
+            document.querySelectorAll('#grid-blocos-vis .btn-selecao').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('container-aptos-vis').classList.add('d-none');
+        }
+
+        function selecionarBlocoVis(bloco, el) {
+            blocoVis = bloco; aptoVis = '';
+            document.querySelectorAll('#grid-blocos-vis .btn-selecao').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('lbl-bloco-vis').innerText = bloco;
+            document.getElementById('container-aptos-vis').classList.remove('d-none');
+            
+            const gridAp = document.getElementById('grid-aptos-vis'); gridAp.innerHTML = '';
+            const aptosOrd = aptosAgrupadosPin[bloco].sort((a,b) => (isNaN(parseInt(a.numero)) ? a.numero.localeCompare(b.numero) : parseInt(a.numero)-parseInt(b.numero)));
+            aptosOrd.forEach(a => { 
+                gridAp.innerHTML += `<div class="btn-selecao border-dark text-dark" onclick="selecionarAptoVis('${a.numero}', this)">${a.numero}</div>`; 
+            });
+        }
+
+        function selecionarAptoVis(apto, el) {
+            aptoVis = apto;
+            document.querySelectorAll('#grid-aptos-vis .btn-selecao').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Formata texto do veículo para exibição bonita
+        function formatarTextoVeiculo(v) {
+            if (!v.veiculo_modelo && !v.veiculo_placa && !v.veiculo_cor) return '';
+            let partes = [];
+            if (v.veiculo_modelo) partes.push(v.veiculo_modelo);
+            if (v.veiculo_cor) partes.push(v.veiculo_cor);
+            let carro = partes.join(' ');
+            let placa = v.veiculo_placa ? `[Placa: ${v.veiculo_placa.toUpperCase()}]` : '';
+            return `${carro} ${placa}`.trim();
+        }
+
+        // 5. SALVA NO SUPABASE (COM VEÍCULO E OBSERVAÇÕES)
+        async function salvarEntradaVisitante() {
+            const nome = document.getElementById('vis-nome').value.trim();
+            const doc = document.getElementById('vis-doc').value.trim();
+            const tipo = document.getElementById('vis-tipo').value;
+            const emp = document.getElementById('vis-empresa').value.trim();
+            const vModelo = document.getElementById('vis-veiculo-modelo').value.trim();
+            const vCor = document.getElementById('vis-veiculo-cor').value.trim();
+            const vPlaca = document.getElementById('vis-veiculo-placa').value.trim().toUpperCase();
+            const obs = document.getElementById('vis-obs').value.trim();
+
+            if (!nome) return alert("Digite o nome do visitante!");
+            if (!blocoVis || !aptoVis) return alert("Selecione o Bloco e Apartamento (ou clique em Área Comum)!");
+
+            const btn = document.getElementById('btn-salvar-vis');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Liberando...'; btn.disabled = true;
+
+            const { error } = await supabaseClient.from('visitantes').insert([{
+                condominio_id: meuCondominioId, porteiro_id: meuPerfilId,
+                nome: nome, documento: doc, tipo: tipo, empresa: emp,
+                bloco: blocoVis, apto: aptoVis,
+                veiculo_modelo: vModelo || null, veiculo_cor: vCor || null, veiculo_placa: vPlaca || null,
+                observacoes: obs || null,
+                foto_url: fotoVisitanteBase64, status: 'presente'
+            }]);
+
+            if (error) {
+                alert("Erro ao registrar: " + error.message);
+            } else {
+                alert(`✅ Acesso Liberado para ${nome}!`);
+                document.getElementById('vis-nome').value = ''; 
+                document.getElementById('vis-doc').value = ''; 
+                document.getElementById('vis-empresa').value = '';
+                document.getElementById('vis-veiculo-modelo').value = '';
+                document.getElementById('vis-veiculo-cor').value = '';
+                document.getElementById('vis-veiculo-placa').value = '';
+                document.getElementById('vis-obs').value = '';
+                document.getElementById('alerta-vis-recorrente').classList.add('d-none');
+                fotoVisitanteBase64 = null;
+                document.getElementById('vis-box-foto').classList.add('d-none');
+                document.getElementById('btn-ligar-cam-vis').classList.remove('d-none');
+                document.getElementById('container-aptos-vis').classList.add('d-none');
+                blocoVis = ''; aptoVis = '';
+                renderizarBlocosVis();
+                
+                document.querySelectorAll('#screen-visitantes .morador-tab')[1].click();
+            }
+            btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Liberar Entrada'; btn.disabled = false;
+        }
+
+        // 6. CARREGA QUEM ESTÁ DENTRO DO PRÉDIO AGORA
+        async function carregarVisitantesAtivos() {
+            const listaEl = document.getElementById('lista-vis-ativos');
+            listaEl.innerHTML = '<div class="text-center p-4 text-muted"><span class="spinner-border spinner-border-sm"></span></div>';
+
+            const { data: ativos, error } = await supabaseClient.from('visitantes')
+                .select('*').eq('condominio_id', meuCondominioId).eq('status', 'presente').order('data_entrada', { ascending: false });
+
+            if (error) return listaEl.innerHTML = 'Erro ao carregar.';
+            
+            document.getElementById('count-vis-ativos').innerText = ativos ? ativos.length : 0;
+
+            if (!ativos || ativos.length === 0) {
+                return listaEl.innerHTML = '<div class="text-center p-5 border rounded-4 bg-white text-muted">Nenhum visitante ou prestador dentro do condomínio neste momento.</div>';
+            }
+
+            listaEl.innerHTML = '';
+            ativos.forEach(v => {
+                let horaEntrada = new Date(v.data_entrada).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                let imgAvatar = v.foto_url ? `<img src="${v.foto_url}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #052439;">` : `<div class="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center text-secondary fw-bold" style="width: 60px; height: 60px; font-size: 1.5rem;"><i class="bi bi-person"></i></div>`;
+                let badgeCor = v.tipo === 'Prestador' ? 'bg-warning text-dark' : v.tipo === 'Entregador' ? 'bg-info text-dark' : 'bg-primary';
+                let txtEmpresa = v.empresa ? ` (${v.empresa})` : '';
+                let txtCarro = formatarTextoVeiculo(v);
+                let htmlCarro = txtCarro ? `<span class="badge bg-light text-dark border mt-1 d-inline-block"><i class="bi bi-car-front-fill text-primary me-1"></i>${txtCarro}</span>` : '';
+                let htmlObs = v.observacoes ? `<small class="text-muted d-block mt-1 fst-italic"><i class="bi bi-chat-left-text"></i> "${v.observacoes}"</small>` : '';
+
+                listaEl.innerHTML += `
+                <div class="apex-card p-3 d-flex align-items-center justify-content-between shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        ${imgAvatar}
+                        <div>
+                            <span class="badge ${badgeCor} mb-1" style="font-size: 0.65rem;">${v.tipo}${txtEmpresa}</span>
+                            <strong class="d-block text-dark fs-6">${v.nome}</strong>
+                            <small class="text-muted d-block">Destino: <b>Bl ${v.bloco} - ${v.apto}</b></small>
+                            ${htmlCarro}
+                            ${htmlObs}
+                            <small class="text-success fw-bold d-block mt-1" style="font-size: 0.75rem;"><i class="bi bi-box-arrow-in-right"></i> Entrou às ${horaEntrada}</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm fw-bold px-3 py-2 shadow-sm" onclick="registrarSaidaVisitante('${v.id}', '${v.nome}')">
+                        <i class="bi bi-box-arrow-right d-block fs-5"></i> Dar Saída
+                    </button>
+                </div>`;
+            });
+        }
+
+        async function registrarSaidaVisitante(idVis, nomeVis) {
+            if(!confirm(`Confirmar que ${nomeVis} já saiu do condomínio?`)) return;
+            await supabaseClient.from('visitantes').update({ status: 'saiu', data_saida: new Date().toISOString() }).eq('id', idVis);
+            carregarVisitantesAtivos();
+        }
+
+        // 7. HISTÓRICO COMPLETO E EMISSÃO DE RELATÓRIOS (PDF E EXCEL)
+        function calcularPermanencia(entradaISO, saidaISO) {
+            if (!saidaISO) return 'Ainda no prédio';
+            const diffMs = new Date(saidaISO) - new Date(entradaISO);
+            if (diffMs <= 0) return '1 min';
+            const totalMin = Math.floor(diffMs / 60000);
+            const horas = Math.floor(totalMin / 60);
+            const mins = totalMin % 60;
+            return horas > 0 ? `${horas}h ${mins}min` : `${mins} min`;
+        }
+
+        async function carregarHistoricoVisitantes() {
+            const listaEl = document.getElementById('lista-vis-historico');
+            listaEl.innerHTML = '<div class="text-center p-4 text-muted"><span class="spinner-border spinner-border-sm"></span> Carregando histórico...</div>';
+
+            const { data: todos, error } = await supabaseClient
+                .from('visitantes')
+                .select('*')
+                .eq('condominio_id', meuCondominioId)
+                .order('data_entrada', { ascending: false })
+                .limit(500);
+
+            if (error) return listaEl.innerHTML = '<span class="text-danger">Erro ao buscar histórico.</span>';
+
+            historicoVisitantesMemoria = todos || [];
+            filtrarHistoricoVisitantes();
+        }
+
+        function limparFiltrosHistoricoVis() {
+            document.getElementById('filtro-vis-busca').value = '';
+            document.getElementById('filtro-vis-data-ini').value = '';
+            document.getElementById('filtro-vis-data-fim').value = '';
+            document.getElementById('filtro-vis-tipo').value = 'TODOS';
+            filtrarHistoricoVisitantes();
+        }
+
+        function filtrarHistoricoVisitantes() {
+            const termo = (document.getElementById('filtro-vis-busca')?.value || '').toLowerCase().trim();
+            const dIni = document.getElementById('filtro-vis-data-ini')?.value || '';
+            const dFim = document.getElementById('filtro-vis-data-fim')?.value || '';
+            const tipo = document.getElementById('filtro-vis-tipo')?.value || 'TODOS';
+
+            listaVisitantesFiltradaAtual = historicoVisitantesMemoria.filter(v => {
+                const txt = `${v.nome || ''} ${v.documento || ''} ${v.empresa || ''} ${v.bloco || ''} ${v.apto || ''} ${v.veiculo_modelo || ''} ${v.veiculo_cor || ''} ${v.veiculo_placa || ''} ${v.observacoes || ''}`.toLowerCase();
+                const bateuTexto = !termo || txt.includes(termo);
+                const bateuTipo = (tipo === 'TODOS') || (v.tipo === tipo);
+
+                let bateuData = true;
+                if (dIni || dFim) {
+                    const dt = new Date(v.data_entrada);
+                    const dataLocal = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+                    if (dIni && dataLocal < dIni) bateuData = false;
+                    if (dFim && dataLocal > dFim) bateuData = false;
+                }
+
+                return bateuTexto && bateuTipo && bateuData;
+            });
+
+            document.getElementById('lbl-total-hist-vis').innerText = listaVisitantesFiltradaAtual.length;
+            renderizarListaHistoricoVisitantes(listaVisitantesFiltradaAtual);
+        }
+
+        function renderizarListaHistoricoVisitantes(lista) {
+            const listaEl = document.getElementById('lista-vis-historico');
+            listaEl.innerHTML = '';
+
+            if (lista.length === 0) {
+                listaEl.innerHTML = '<div class="text-center p-4 border rounded-3 bg-light text-muted small">Nenhum registro encontrado para este filtro.</div>';
+                return;
+            }
+
+            lista.forEach(v => {
+                const dtEntrada = new Date(v.data_entrada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                const dtSaida = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : null;
+                const permanencia = calcularPermanencia(v.data_entrada, v.data_saida);
+
+                const imgAvatar = v.foto_url 
+                    ? `<img src="${v.foto_url}" style="width: 55px; height: 55px; border-radius: 50%; object-fit: cover; border: 2px solid #cbd5e1;">` 
+                    : `<div class="bg-secondary bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center text-secondary fw-bold" style="width: 55px; height: 55px;"><i class="bi bi-person"></i></div>`;
+
+                const statusBadge = v.status === 'presente'
+                    ? `<span class="badge bg-success">No Prédio</span>`
+                    : `<span class="badge bg-secondary">Saiu (${permanencia})</span>`;
+
+                const txtCarro = formatarTextoVeiculo(v);
+                const htmlCarro = txtCarro ? `<div class="small fw-bold text-primary mt-1"><i class="bi bi-car-front-fill me-1"></i>${txtCarro}</div>` : '';
+                const htmlObs = v.observacoes ? `<div class="small text-muted fst-italic mt-1"><i class="bi bi-info-circle"></i> Obs: ${v.observacoes}</div>` : '';
+
+                listaEl.innerHTML += `
+                <div class="border rounded-3 p-3 bg-light shadow-sm">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center gap-3">
+                            ${imgAvatar}
+                            <div>
+                                <strong class="text-dark d-block">${v.nome}</strong>
+                                <small class="text-muted d-block">Doc: ${v.documento || 'Não inf.'} | ${v.tipo}${v.empresa ? ' - ' + v.empresa : ''}</small>
+                                <span class="badge bg-dark mt-1">Destino: Bl ${v.bloco} - ${v.apto}</span>
+                            </div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    ${htmlCarro}
+                    ${htmlObs}
+                    <div class="d-flex justify-content-between text-muted pt-2 mt-2 border-top" style="font-size: 0.75rem;">
+                        <span><i class="bi bi-box-arrow-in-right text-success"></i> Entrada: <b>${dtEntrada}</b></span>
+                        <span><i class="bi bi-box-arrow-right text-danger"></i> Saída: <b>${dtSaida || '---'}</b></span>
+                    </div>
+                </div>`;
+            });
+        }
+
+        // 8. EMISSÃO DE RELATÓRIO PROFISSIONAL EM PDF
+        async function exportarRelatorioVisitantesPDF() {
+            if (listaVisitantesFiltradaAtual.length === 0) return alert("Não há registros na lista atual para gerar o relatório.");
+
+            const { data: cond } = await supabaseClient.from('condominios').select('nome').eq('id', meuCondominioId).maybeSingle();
+            const nomeCond = cond?.nome || 'Condomínio';
+            const dataEmissao = new Date().toLocaleString('pt-BR');
+
+            let linhasHtml = '';
+            listaVisitantesFiltradaAtual.forEach(v => {
+                const ent = new Date(v.data_entrada).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+                const sai = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : 'No Prédio';
+                const perm = calcularPermanencia(v.data_entrada, v.data_saida);
+                const txtCarro = formatarTextoVeiculo(v) || '---';
+                const fotoTd = v.foto_url 
+                    ? `<img src="${v.foto_url}" style="width: 38px; height: 38px; border-radius: 50%; object-fit: cover;">` 
+                    : `---`;
+
+                linhasHtml += `
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #cbd5e1; text-align: center;">${fotoTd}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #cbd5e1;">
+                        <strong>${v.nome}</strong><br>
+                        <small style="color: #64748b;">Doc: ${v.documento || '---'}</small>
+                    </td>
+                    <td style="padding: 8px; border-bottom: 1px solid #cbd5e1;">
+                        ${v.tipo}${v.empresa ? '<br><small style="color:#64748b;">' + v.empresa + '</small>' : ''}
+                    </td>
+                    <td style="padding: 8px; border-bottom: 1px solid #cbd5e1; font-weight: bold;">Bl ${v.bloco} - ${v.apto}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">${txtCarro}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">
+                        <b>E:</b> ${ent}<br>
+                        <b>S:</b> ${sai} (${perm})
+                    </td>
+                    <td style="padding: 8px; border-bottom: 1px solid #cbd5e1; font-size: 11px;">${v.observacoes || '---'}</td>
+                </tr>`;
+            });
+
+            const htmlRelatorio = `
+            <html><head><title>Relatório de Controle de Acesso - ${nomeCond}</title>
+            <style>
+                body { font-family: Arial, sans-serif; color: #1e293b; padding: 20px; }
+                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #052439; padding-bottom: 12px; margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; font-size: 12px; }
+                th { background-color: #052439; color: white; padding: 10px 8px; text-align: left; }
+                @media print { @page { size: A4 landscape; margin: 10mm; } }
+            </style></head><body>
+                <div class="header">
+                    <div>
+                        <h2 style="margin: 0; color: #052439;">RELATÓRIO DE AUDITORIA - VISITANTES E PRESTADORES</h2>
+                        <p style="margin: 4px 0 0 0; font-size: 14px; font-weight: bold;">${nomeCond}</p>
+                    </div>
+                    <div style="text-align: right; font-size: 12px; color: #475569;">
+                        <strong>Emitido em:</strong> ${dataEmissao}<br>
+                        <strong>Registros listados:</strong> ${listaVisitantesFiltradaAtual.length}
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="text-align: center; width: 50px;">Foto</th>
+                            <th>Visitante / Documento</th>
+                            <th>Categoria / Empresa</th>
+                            <th>Destino</th>
+                            <th>Veículo / Placa</th>
+                            <th>Entrada / Saída</th>
+                            <th>Observações</th>
+                        </tr>
+                    </thead>
+                    <tbody>${linhasHtml}</tbody>
+                </table>
+            </body></html>`;
+
+            const win = window.open('', '_blank');
+            win.document.write(htmlRelatorio);
+            win.document.close();
+            setTimeout(() => win.print(), 500);
+        }
+
+        // 9. EXPORTAR PARA EXCEL (CSV)
+        function exportarRelatorioVisitantesCSV() {
+            if (listaVisitantesFiltradaAtual.length === 0) return alert("Não há registros para exportar.");
+            let csv = "Nome;Documento;Tipo;Empresa;Bloco;Apartamento;Veiculo_Modelo;Veiculo_Cor;Veiculo_Placa;Entrada;Saida;Permanencia;Observacoes\n";
+            listaVisitantesFiltradaAtual.forEach(v => {
+                const ent = new Date(v.data_entrada).toLocaleString('pt-BR');
+                const sai = v.data_saida ? new Date(v.data_saida).toLocaleString('pt-BR') : 'No Predio';
+                const perm = calcularPermanencia(v.data_entrada, v.data_saida);
+                const obsLimpa = (v.observacoes || '').replace(/;/g, ',').replace(/\r?\n/g, ' ');
+                csv += `${v.nome};${v.documento || ''};${v.tipo};${v.empresa || ''};${v.bloco};${v.apto};${v.veiculo_modelo || ''};${v.veiculo_cor || ''};${v.veiculo_placa || ''};${ent};${sai};${perm};${obsLimpa}\n`;
+            });
+            const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Relatorio_Visitantes_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
